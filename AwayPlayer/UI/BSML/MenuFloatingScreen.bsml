@@ -1,0 +1,11 @@
+﻿<bg xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' 
+	xsi:schemaLocation='https://monkeymanboy.github.io/BSML-Docs/ https://raw.githubusercontent.com/monkeymanboy/BSML-Docs/gh-pages/BSMLSchema.xsd'
+	>
+	<vertical bg="panel-top">
+		<horizontal pad="2">
+			<text font-size="16" text='Starting in: '/>
+			<text font-size="16" id='StartingInTime' />
+		</horizontal>
+		<button text='Cancel' hover-hint='Will exit AFK mode' on-click='ExitAFKMode'/>
+	</vertical>
+</bg>
