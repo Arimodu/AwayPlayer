@@ -2,13 +2,16 @@
 using BeatLeader.Models;
 using BeatLeader.Models.Replay;
 using BeatLeader.Replayer;
+using HMUI;
 using SiraUtil.Logging;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using Zenject;
 using Random = System.Random;
 using Score = AwayPlayer.Models.Score;
@@ -24,7 +27,16 @@ namespace AwayPlayer
         private readonly Random rnd = new Random();
         internal protected MenuFloatingScreen FloatingScreen;
         public bool Enabled = false;
-        public bool IsPlaying = false;
+        private bool _isPlaying = false;
+        public bool IsPlaying
+        {
+            get => _isPlaying;
+            private set
+            {
+                Log.Info($"IsPlaying set value: {value}");
+                _isPlaying = value;
+            }
+        }
 
         public List<Score> Scores { get; private set; }
         public List<Score> AllScores { get; private set; }
@@ -64,11 +76,12 @@ namespace AwayPlayer
 
         private void ReplayerLauncher_ReplayWasFinishedEvent(ReplayLaunchData data)
         {
-            IsPlaying = false;
+            Dispatcher.EnqueueWithDelay(() => IsPlaying = false, 100); // idk, its not getting set, so lets try this
+            Dispatcher.EnqueueWithDelay(ResetSongSelectionFilter, 500);
 
             SelectRandomReplay();
 
-            Dispatcher.EnqueueWithDelay(PrepareReplayAsync, 3000);
+            Dispatcher.EnqueueWithDelay(PrepareReplayAsync, 2000);
         }
 
         public void Setup()
@@ -110,7 +123,7 @@ namespace AwayPlayer
             LoadedReplay = replay;
             IsLoaded = true;
 
-            var levelId = $"custom_level_{CurrentScore.Song.Hash}";
+            var levelId = $"custom_level_{CurrentScore.Song.Hash.ToUpper()}";
             Dispatcher.Enqueue(() => ShowLevelPreview(levelId));
 
             Dispatcher.EnqueueWithDelay(StartReplayAsync, 10000, (remaining) =>
@@ -120,7 +133,7 @@ namespace AwayPlayer
             });
         }
 
-        private void ShowLevelPreview(string levelId)
+        private void ShowLevelPreview(string levelId, bool isError = false, int errorCounter = 0)
         {
             var selectionController = GameObject.Find("LevelSelectionNavigationController").GetComponent<LevelSelectionNavigationController>();
 
@@ -133,52 +146,103 @@ namespace AwayPlayer
             var beatmapPack = LevelsModel.GetLevelPackForLevelId(levelId);
             var preview = LevelsModel.GetLevelPreviewForLevelId(levelId);
 
-            bool isError = false;
-            int errorCounter = 0;
-
-            do
+            try
             {
                 try
                 {
-                    var navController = selectionController._levelFilteringNavigationController;
-
-                    try
-                    {
-                        if (navController.selectedLevelCategory != SelectLevelCategoryViewController.LevelCategory.All)
-                        {
-                            var categorySelector = selectionController._levelFilteringNavigationController._selectLevelCategoryViewController;
-                            if (categorySelector != null)
-                            {
-                                var iconSegmentControl = categorySelector._levelFilterCategoryIconSegmentedControl;
-                                var categoryInfos = categorySelector._levelCategoryInfos;
-                                var index = categoryInfos.Select(x => x.levelCategory).ToArray().IndexOf(SelectLevelCategoryViewController.LevelCategory.All);
-
-                                iconSegmentControl.SelectCellWithNumber(index);
-                                categorySelector.LevelFilterCategoryIconSegmentedControlDidSelectCell(iconSegmentControl, index);
-                            }
-                        }
-                    }
-                    catch (System.NullReferenceException)
-                    {
-                        Log.Error("Could not force select LevelCategory.All. Trying to show level preview anyway...");
-                    }
-
-                    selectionController.Setup(SongPackMask.all, BeatmapDifficultyMask.All, new BeatmapCharacteristicSO[0], false, false, "Play", beatmapPack, SelectLevelCategoryViewController.LevelCategory.All, preview, true);
+                    ForceSelectFilterCategory(SelectLevelCategoryViewController.LevelCategory.All);
                 }
-                catch (System.Exception e)
+                catch (System.NullReferenceException)
                 {
-                    isError = true;
-                    errorCounter++;
-                    Log.Error($"Failed to show preview, retrying... (counter at {errorCounter})");
-                    Log.Critical(e);
-
+                    Log.Error("Could not force select LevelCategory.All. Trying to show level preview anyway...");
                 }
-            } while (isError && errorCounter < 5); // Try as long as error is true and errorCounter is less than 5
+
+                selectionController.Setup(SongPackMask.all, BeatmapDifficultyMask.All, new BeatmapCharacteristicSO[0], false, false, "Play", beatmapPack, SelectLevelCategoryViewController.LevelCategory.All, preview, true);
+            }
+            catch (Exception e)
+            {
+                isError = true;
+                errorCounter++;
+                Log.Error($"Failed to show preview for {levelId}, retrying with filter...");
+                Log.Critical(e);
+                if (errorCounter < 2)
+                {
+                    GameObject.Find("BackButton").GetComponent<NoTransitionsButton>().onClick.Invoke();
+                    Dispatcher.EnqueueWithDelay((GameObject.Find("SoloButton") ?? GameObject.Find("Wrapper/BeatmapWithModifiers/BeatmapSelection/EditButton")).GetComponent<NoTransitionsButton>().onClick.Invoke, 1000);
+                    Dispatcher.EnqueueWithDelay(() => ShowLevelPreview(levelId, true, errorCounter), 2000);
+                }
+                switch (errorCounter)
+                {
+                    case 0:
+                        break;
+                    case 1:
+                        FilterToSelectedSong(levelId);
+                        break;
+                    case 2:
+                        FilterToSelectedSong(levelId);
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
+
+        private void ForceSelectFilterCategory(SelectLevelCategoryViewController.LevelCategory levelCategory)
+        {
+            try
+            {
+                var selectionController = GameObject.Find("LevelSelectionNavigationController").GetComponent<LevelSelectionNavigationController>();
+
+                var navController = selectionController._levelFilteringNavigationController;
+
+                if (navController.selectedLevelCategory != levelCategory)
+                {
+                    var categorySelector = selectionController._levelFilteringNavigationController._selectLevelCategoryViewController;
+                    if (categorySelector != null)
+                    {
+                        var iconSegmentControl = categorySelector._levelFilterCategoryIconSegmentedControl;
+                        var categoryInfos = categorySelector._levelCategoryInfos;
+                        var index = categoryInfos.Select(x => x.levelCategory).ToArray().IndexOf(levelCategory);
+
+                        iconSegmentControl.SelectCellWithNumber(index);
+                        categorySelector.LevelFilterCategoryIconSegmentedControlDidSelectCell(iconSegmentControl, index);
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                Log.Error("Failed to force category selection");
+                Log.Critical(e);
+            }
+        }
+
+        public void FilterToSelectedSong(string levelId)
+        {
+            var searchController = GameObject.Find("LevelSelectionNavigationController").GetComponent<LevelSelectionNavigationController>()._levelFilteringNavigationController._levelSearchViewController;
+
+            try
+            {
+                searchController.ResetCurrentFilterParams();
+                searchController.UpdateSearchLevelFilterParams(LevelFilterParams.ByBeatmapLevelIds(new HashSet<string>() { levelId }));
+            }
+            catch (Exception e)
+            {
+                Log.Error("Failed to filter to selection");
+                Log.Critical(e);
+            }
+        }
+
+        public void ResetSongSelectionFilter()
+        {
+            var searchController = GameObject.Find("LevelSelectionNavigationController").GetComponent<LevelSelectionNavigationController>()._levelFilteringNavigationController._levelSearchViewController;
+            searchController.ResetCurrentFilterParams();
+            ForceSelectFilterCategory(SelectLevelCategoryViewController.LevelCategory.All);
         }
 
         public async Task StartReplayAsync() => await StartReplayAsync(LoadedReplay);
         public async Task StartReplayAsync(Replay replay)
         {
+            Log.Info($"Starting replay...\nEnabled: {Enabled}\nIsPlaying: {IsPlaying}\nIsLoaded: {IsLoaded}");
             if (!Enabled || IsPlaying || !IsLoaded) return;
             IsPlaying = true;
 

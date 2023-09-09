@@ -25,6 +25,7 @@ namespace AwayPlayer.UI
         [UIAction("enable_button")]
         private void EnableButton()
         {
+            if (_replayManager.Enabled) return;
             _replayManager.Enabled = true;
             _replayManager.Setup();
             Task.Run(() => _unityMainThreadDispatcher.EnqueueWithDelay(_replayManager.StartReplayAsync, 10000, (remaining) => _menuFloatingScreen.Timeout = remaining.ToString()));
