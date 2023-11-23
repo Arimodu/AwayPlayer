@@ -1,0 +1,13 @@
+﻿<bg xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' 
+	xsi:schemaLocation='https://monkeymanboy.github.io/BSML-Docs/ https://raw.githubusercontent.com/monkeymanboy/BSML-Docs/gh-pages/BSMLSchema.xsd'
+	>
+	<scrollable-settings-container>
+		<bool-setting text='Enable handle'/>
+		<dropdown-list-setting text='Duplicate replay policy' 
+							   hover-hint='How to handle duplicate replays
+							   Allow: Duplicate replays will be allowed
+							   Prevent: Duplicate replays will be prevented, however if you run out of replays, the list will shuffle and start over
+							   Strict: Duplicate replays will never be played, even if you run out of replays. Will shut down replaying if there are no more replays available' 
+							   options='AwayPlayer.Models.DuplicateReplayPolicy'/>
+	</scrollable-settings-container>
+</bg>

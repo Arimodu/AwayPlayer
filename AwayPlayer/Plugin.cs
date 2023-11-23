@@ -1,10 +1,9 @@
 ﻿using AwayPlayer.Installers;
-using HarmonyLib;
 using IPA;
 using IPA.Config;
 using IPA.Config.Stores;
 using SiraUtil.Zenject;
-using System.Reflection;
+using System;
 using IPALogger = IPA.Logging.Logger;
 
 namespace AwayPlayer
@@ -13,8 +12,10 @@ namespace AwayPlayer
     [NoEnableDisable]
     public class Plugin
     {
-        internal static Assembly Assembly { get; } = Assembly.GetExecutingAssembly();
         internal static IPALogger Logger { get; set; }
+        internal static Version Version = new Version(0,0,1);
+
+        public static string VersionString => Version.ToString();
 
         [Init]
         public Plugin(IPALogger logger, Config config, Zenjector zenject)
@@ -24,14 +25,24 @@ namespace AwayPlayer
             zenject.UseMetadataBinder<Plugin>();
             zenject.UseHttpService(SiraUtil.Web.HttpServiceType.UnityWebRequests);
 
-            zenject.Install<APMenuInstaller>(Location.Menu, config.Generated<APConfig>());
+            zenject.Install<APAppInstaller>(Location.App, config.Generated<APConfig>());
+            zenject.Install<APMenuInstaller>(Location.Menu);
         }
 
-        [OnStart]
-        public void OnStart()
-        {
-            var harmony = new Harmony("Arimodu.AwayPlayer.Whatever.Whatever");
-            harmony.PatchAll(Assembly);
-        }
+        /* TODO:
+         * - Caching???
+         * - Handle
+         * - Floating button
+         * - Player settings editor
+         * - Filter by FC
+         * - Instant load option
+         * - Set timeout time option
+         * - Multifilter (right settings, middle filters, left single filter, bottom totals)
+         * - In game controller
+         * - Queue view
+         * - Picks / Bans
+         * - Small menu integration
+         * 
+        */ 
     }
 }

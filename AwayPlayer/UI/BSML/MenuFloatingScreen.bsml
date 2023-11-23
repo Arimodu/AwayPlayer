@@ -1,11 +1,25 @@
 ﻿<bg xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' 
 	xsi:schemaLocation='https://monkeymanboy.github.io/BSML-Docs/ https://raw.githubusercontent.com/monkeymanboy/BSML-Docs/gh-pages/BSMLSchema.xsd'
 	>
-	<vertical bg="panel-top">
+	<vertical bg="round-rect-panel" pad="5" pad-top="3" pad-bottom="3">
 		<horizontal pad="2">
-			<text font-size="16" text='Starting in: '/>
-			<text font-size="16" id='StartingInTime' />
+			<text align="Center" font-align="Center" font-size="6" text="AwayPlayer vx.x.x" id="TitleText"/>
 		</horizontal>
-		<button text='Cancel' hover-hint='Will exit AFK mode' on-click='ExitAFKMode'/>
+		<loading-indicator ignore-layout='false' preserve-aspect='true' preferred-height='20' preferred-width='20'/>
+		<horizontal pad="1">
+			<text font-size="5" align="Right" text='Starting in: '/>
+			<text font-size="5" align="Left" id='StartingInTime' />
+		</horizontal>
+		<horizontal pad='1'>
+			<button text='Exit' hover-hint='Will exit AFK mode' on-click='ExitAFKMode'/>
+			<button text='Pause' on-click='PauseCountdown' id='PauseButton'/>
+			<button text='Resume' on-click='ResumeCountdown' id='ResumeButton' active='false'/> 
+			<button text='Skip' on-click='SkipCurrent'/>
+
+			<button text='Recreate' hover-hint='WARNING, DEBUG BUTTON!!! Recreates the floating screen. DO NOT USE OUTSIDE DEBUGGING!!!' on-click='RecreateThis' active='false' id='RecreateButton'/>
+		</horizontal>
 	</vertical>
+	<horizontal ignore-layout='true' anchor-pos-x='27' anchor-pos-y='-23'>
+		<text text='AwayPlayer vx.x.x by Arimodu' font-size='2' face-color='#70033f' id='NameText'/>
+	</horizontal>
 </bg>

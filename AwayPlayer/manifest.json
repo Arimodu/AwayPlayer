@@ -2,11 +2,14 @@
   "$schema": "https://raw.githubusercontent.com/bsmg/BSIPA-MetadataFileSchema/master/Schema.json",
   "id": "AwayPlayer",
   "name": "AwayPlayer",
-  "author": "",
+  "author": "Arimodu",
   "version": "0.0.1",
-  "description": "",
+  "description": "Starts BeatLeader replays automatically according to a filter",
   "gameVersion": "1.29.1",
   "dependsOn": {
-    "BSIPA": "^4.2.0"
+    "BSIPA": "^4.2.0",
+    "SiraUtil": "^3.1.2",
+    "BS Utils": "^1.12.2",
+    "BeatLeader": "^0.9.0"
   }
 }

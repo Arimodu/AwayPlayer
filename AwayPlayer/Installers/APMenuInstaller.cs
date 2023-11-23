@@ -1,24 +1,24 @@
-﻿using AwayPlayer.UI;
+﻿using AwayPlayer.Managers;
+using AwayPlayer.Models;
+using AwayPlayer.UI;
+using AwayPlayer.Utils;
 using Zenject;
 
 namespace AwayPlayer.Installers
 {
     internal class APMenuInstaller : Installer
     {
-        private APConfig Config;
-        public APMenuInstaller(APConfig config)
-        {
-            Config = config;
-        }
-
         public override void InstallBindings()
         {
-            Container.BindInstance(Config);
-            Container.BindInterfacesAndSelfTo<UnityMainThreadDispatcher>().AsSingle();
+            Container.BindInterfacesAndSelfTo<CacheManager<Score>>().AsSingle();
             Container.BindInterfacesAndSelfTo<APIWrapper>().AsSingle();
+            Container.BindInterfacesAndSelfTo<ScoreListManager>().AsSingle();
             Container.BindInterfacesAndSelfTo<ReplayManager>().AsSingle();
-            Container.BindInterfacesAndSelfTo<MenuFloatingScreen>().FromNewComponentAsViewController().AsSingle();
-            Container.BindInterfacesAndSelfTo<MainMenu>().AsSingle();
+            Container.BindInterfacesAndSelfTo<APMenuFloatingScreen>().FromNewComponentAsViewController().AsSingle();
+            Container.BindInterfacesAndSelfTo<APMainMenu>().FromNewComponentAsViewController().AsSingle();
+            Container.BindInterfacesAndSelfTo<APSettingsMainViewController>().FromNewComponentAsViewController().AsSingle();
+            Container.BindInterfacesAndSelfTo<APSettingsFlowCoordinator>().FromNewComponentOnNewGameObject().AsSingle();
+            Container.BindInterfacesAndSelfTo<ArgReplayStarter>().AsSingle();
         }
     }
 }

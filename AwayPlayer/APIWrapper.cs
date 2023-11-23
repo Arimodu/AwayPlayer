@@ -1,7 +1,9 @@
 ﻿using AwayPlayer.Models;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using SiraUtil.Logging;
 using SiraUtil.Web;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -9,13 +11,19 @@ namespace AwayPlayer
 {
     internal class APIWrapper
     {
+        private readonly CacheManager<Score> ScoreCache;
         private readonly IHttpService HttpService;
         private readonly SiraLog SiraLogger;
 
-        public APIWrapper(SiraLog siraLog, IHttpService httpService)
+        private readonly TimeSpan RateLimitTime = TimeSpan.FromSeconds(10) + TimeSpan.FromMilliseconds(100);
+        private readonly int RateLimitCount = 9;
+        private readonly int BatchSize = 100;
+
+        public APIWrapper(SiraLog siraLog, IHttpService httpService, CacheManager<Score> scoreCache)
         {
             SiraLogger = siraLog;
             HttpService = httpService;
+            ScoreCache = scoreCache;
 #if DEBUG
             SiraLogger.DebugMode = true;
 #endif
@@ -25,68 +33,88 @@ namespace AwayPlayer
         {
             // Get the player UserId
             var userInfo = await BS_Utils.Gameplay.GetUserInfo.GetPlatformUserModel().GetUserInfo();
+            var userId = userInfo.platformUserId;
+
+            // User ids used for debugging
+            //userId = "76561198967815164"; // IPixelGalaxy user id
 
             // Fetch the total number of scores available
-            var response = await HttpService.GetAsync($"https://api.beatleader.xyz/player/{userInfo.platformUserId}/scores?count=0");
-            string jsonData = await response.ReadAsStringAsync();
-            int total = JObject.Parse(jsonData)["metadata"]["total"].Value<int>();
+            var totalResponse = await HttpService.GetAsync($"https://api.beatleader.xyz/player/{userId}/scores?count=0");
+            string totalJsonData = await totalResponse.ReadAsStringAsync();
+            int total = JObject.Parse(totalJsonData)["metadata"]["total"].Value<int>();
 
-            // Fetch all scores for the player
-            response = await HttpService.GetAsync($"https://api.beatleader.xyz/player/{userInfo.platformUserId}/scores?count={total}");
-            jsonData = await response.ReadAsStringAsync();
+            var cacheTotal = ScoreCache.CountCacheItems();
+
+            if (total == cacheTotal) return ScoreCache.GetAllCacheEntries();
+
+            if (total < cacheTotal)
+            {
+                SiraLogger.Error("Bad cache detected, cleared and reaquiring....");
+                ScoreCache.ClearCache(); // If the cache contains more than the server has, we can assume we have borked cache, so lets clear it and try again
+                cacheTotal = 0;
+            }
+
+            var requestsNeeded = (int)Math.Ceiling((double)(total - cacheTotal) / BatchSize);
 
             List<Score> scores = new List<Score>();
+            bool rateLimitHit = false;
 
-            // Calculate the nearest number divisible by 24 and the remainder
-            int closestDivisibleBy24 = total - (total % 24);
-            int remainder = total - closestDivisibleBy24;
-
-            // Deserialize JSON data only once into a JArray
-            JArray scoresArray = JObject.Parse(jsonData)["data"] as JArray;
-
-            // Process scores in parallel using up to 24 threads
-            Parallel.For(0, 24, i =>
+            for (int i = 0; i < requestsNeeded; i++)
             {
-                int chunkSize = closestDivisibleBy24 / 24; // Adjusted chunk size
-                int start = i * chunkSize;
-                int end = (i == 23) ? closestDivisibleBy24 : (i + 1) * chunkSize;
+                var page = i + 1; // Pages start from 1
+                string fetchUri = $"https://api.beatleader.xyz/player/{userId}/scores?count={BatchSize}&page={page}";
 
-                // Distribute the remaining items among the threads
-                if (i < remainder)
+                SiraLogger.Debug($"Fetching from: {fetchUri}");
+
+                if (page % RateLimitCount == 0 || rateLimitHit)
                 {
-                    start += i;
-                    end += i + 1;
-                }
-                else
-                {
-                    start += remainder;
-                    end += remainder;
+                    var time = DateTime.Now;
+                    while (time + RateLimitTime > DateTime.Now) ; // Ugly but works
+                    rateLimitHit = false;
                 }
 
-                List<Score> chunkScores = new List<Score>();
+                JArray scoresArray;
+                string jsonData = string.Empty;
 
-                // Process scores in the current chunk
-                for (int j = start; j < end; j++)
+                try
                 {
-                    var scoreJObject = scoresArray[j] as JObject;
+                    // Fetch scores for the current page
+                    var response = await HttpService.GetAsync(fetchUri);
+                    jsonData = await response.ReadAsStringAsync();
+
+                    // Deserialize JSON data into a JArray
+                    scoresArray = JObject.Parse(jsonData)["data"] as JArray;
+                }
+                catch (JsonReaderException e)
+                {
+                    if (jsonData == "API calls quota exceeded! maximum admitted 10 per 10s.")
+                    {
+                        SiraLogger.Info("Rate limit hit! Waiting 10 seconds for ratelimit to clear");
+                        rateLimitHit = true;
+                        i--; // Will have to repeat current request
+                        continue;
+                    }
+
+                    SiraLogger.Debug(jsonData);
+                    SiraLogger.Error(e);
+                    return null;
+                }
+
+                // Process scores in the current page
+                foreach (var scoreJObject in scoresArray)
+                {
                     var score = scoreJObject.ToObject<Score>();
                     score.Song = scoreJObject["leaderboard"]["song"].ToObject<Song>();
                     score.Difficulty = scoreJObject["leaderboard"]["difficulty"].ToObject<Difficulty>();
-                    chunkScores.Add(score);
-
-                    // Debug information for the parsed score
-                    //SiraLogger.Debug($"Parsed score for {score.Song} with {score}");
+                    scores.Add(score);
+                    ScoreCache.AddOrUpdateCache(score.LeaderboardId, score);
                 }
-
-                // Add the chunk of scores to the main list in a thread-safe manner
-                lock (scores)
-                {
-                    scores.AddRange(chunkScores);
-                }
-            });
+            }
 
             return scores;
         }
+
+
 
         public async Task<byte[]> GetReplayDataAsync(string url)
         {

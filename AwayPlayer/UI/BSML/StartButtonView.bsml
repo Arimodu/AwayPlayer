@@ -1,0 +1,7 @@
+﻿<bg xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' 
+	xsi:schemaLocation='https://monkeymanboy.github.io/BSML-Docs/ https://raw.githubusercontent.com/monkeymanboy/BSML-Docs/gh-pages/BSMLSchema.xsd'
+	>
+	<horizontal child-align='MiddleCenter'>
+		<primary-button on-click='enable_button' text='Enable AFK mode'></primary-button>
+	</horizontal>
+</bg>
