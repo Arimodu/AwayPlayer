@@ -1,4 +1,6 @@
-﻿using AwayPlayer.Models;
+﻿using AwayPlayer.Managers;
+using AwayPlayer.Models;
+using AwayPlayer.UI;
 using BeatLeader.Models;
 using BeatLeader.Models.Replay;
 using BeatLeader.Replayer;
@@ -17,26 +19,57 @@ using Zenject;
 
 namespace AwayPlayer.Utils
 {
-    internal class ArgReplayStarter : IInitializable
+    internal class ArgParser : IInitializable
     {
         private readonly UnityMainThreadDispatcher Dispatcher;
         private readonly ReplayManager ReplayManager;
         private readonly APIWrapper API;
         private readonly SiraLog SiraLogger;
-        private readonly IHttpService HttpService;
-        public ArgReplayStarter(UnityMainThreadDispatcher dispatcher, ReplayManager replayManager, APIWrapper wrapper, SiraLog siraLog, IHttpService httpService)
+        private readonly APMenuFloatingScreen FloatingScreen;
+        private readonly ScoreListManager SCM;
+        public ArgParser(UnityMainThreadDispatcher dispatcher, ReplayManager replayManager, APIWrapper wrapper, SiraLog siraLog, APMenuFloatingScreen floatingScreen, ScoreListManager scoreListManager)
         {
             Dispatcher = dispatcher;
             ReplayManager = replayManager;
             API = wrapper;
             SiraLogger = siraLog;
-            HttpService = httpService;
+            FloatingScreen = floatingScreen;
+            SCM = scoreListManager;
         }
 
         public void Initialize()
         {
-            //SiraLogger.Notice("Init on ArgReplayStarter");
-            Dispatcher.EnqueueWithDelay(LoadReplayAsync, 2000);
+            var args = Environment.GetCommandLineArgs();
+
+            if (args.Contains("replay"))
+            {
+                SiraLogger.Debug("Args contain --replay, starting...");
+                Dispatcher.EnqueueWithDelay(LoadReplayAsync, 2000);
+                if (args.Contains("--autoquit")) ReplayerLauncher.ReplayWasFinishedEvent -= ReplayerLauncher_ReplayWasFinishedEvent;
+                return;
+            }
+
+            // Made this while in VRC... Ignore the shit code quality
+            if (args.Any((x) => x.Contains("autoplay")))
+            {
+                SiraLogger.Debug("Args contain --autoplay, starting...");
+                bool screen = !args.Any((x) => x.Contains("hidescreen"));
+                bool instaPlay = args.Any((x) => x.Contains("instaplay"));
+
+                Dispatcher.EnqueueWithDelay(SelectSolo, 3000);
+                if (screen) Dispatcher.EnqueueWithDelay(() => FloatingScreen.Visible = true, 4000);
+                if (SCM.IsReady) Dispatcher.EnqueueWithDelay(() => ReplayManager.SetupWithOverrides(screen, instaPlay), 5000);
+                else
+                {
+                    void start()
+                    {
+                        Dispatcher.EnqueueWithDelay(() => ReplayManager.SetupWithOverrides(screen, instaPlay), 5000);
+                        SCM.OnScorelistUpdated -= start;
+                    }
+                    SCM.OnScorelistUpdated += start;
+                }
+                return;
+            }
         }
 
         private void ReplayerLauncher_ReplayWasFinishedEvent(ReplayLaunchData data)
@@ -46,16 +79,7 @@ namespace AwayPlayer.Utils
 
         private async void LoadReplayAsync()
         {
-            //SiraLogger.Notice("LoadReplayAsync on ArgReplayStarter");
             var args = Environment.GetCommandLineArgs();
-
-            if (!args.Contains("--replay"))
-            {
-                SiraLogger.Debug("Args dont contain --replay, exitting...");
-                ReplayerLauncher.ReplayWasFinishedEvent -= ReplayerLauncher_ReplayWasFinishedEvent;
-                return;
-            }
-
             var url = args[args.IndexOf("--replay") + 1];
 
             SiraLogger.Debug($"Preparing replay from {url}");

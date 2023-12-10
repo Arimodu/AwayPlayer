@@ -12,14 +12,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using UnityEngine;
-using Zenject;
+using static BeatLeader.Utils.BeatLeaderConstants;
 using Random = System.Random;
 using Score = AwayPlayer.Models.Score;
-using static BeatLeader.Utils.BeatLeaderConstants;
 
 namespace AwayPlayer
 {
-    internal class ReplayManager : IInitializable
+    internal class ReplayManager
     {
         private readonly SiraLog Log;
         private readonly APIWrapper API;
@@ -30,6 +29,10 @@ namespace AwayPlayer
         private readonly Random rnd = new Random();
         internal protected APMenuFloatingScreen FloatingScreen;
         private bool _enabled = false;
+        private Player Player;
+        private bool HasScreen = true;
+        private bool HasDelay = true;
+        private int Delay = 10;
         public bool Enabled
         {
             get => _enabled;
@@ -42,7 +45,7 @@ namespace AwayPlayer
         public bool IsPlaying { get; private set; }
         public bool IsLoaded { get; private set; }
 
-        public Queue<Score> Scores { get; private set; }
+        public Queue<Score> ScoreQueue { get; private set; }
         public Score CurrentScore { get; set; }
         public Replay LoadedReplay { get; private set; }
 
@@ -56,38 +59,47 @@ namespace AwayPlayer
             Dispatcher = dispatcher;
             LevelsModel = levelsModel;
             Config = config;
-            Scores = new Queue<Score>(); // Just init to empty queue
+            Delay = Config.StartDelay;
+            ScoreQueue = new Queue<Score>(); // Just init to empty queue
 #if DEBUG
             Log.DebugMode = true;
 #endif
         }
 
-        public void Initialize()
-        {
-            ReplayerLauncher.ReplayWasFinishedEvent += ReplayerLauncher_ReplayWasFinishedEvent;
-        }
-
         private void ReplayerLauncher_ReplayWasFinishedEvent(ReplayLaunchData data)
         {
+            ReplayerLauncher.ReplayWasFinishedEvent -= ReplayerLauncher_ReplayWasFinishedEvent;
             if (!Enabled || !IsPlaying) return; // Generally, is playing shouldnt matter, but eh, can check it anyway, since it doesnt matter
 
             Dispatcher.Enqueue(() => IsPlaying = false); // idk, its not getting set, so lets try this
 
             SelectRandomReplay();
 
-            Dispatcher.EnqueueWithDelay(PrepareReplayAsync, 2000);
+            Dispatcher.EnqueueWithDelay(PrepareReplayAsync, 1200); // We need at least a little bit of delay here to ensure that the menu scene has loaded (yes it should already be loaded when this event fires, but this is a precaution)
         }
 
         public void Setup()
         {
+            if (Config.StartDelay == 0) HasDelay = false;
+            if (Delay == -1) Delay = Config.StartDelay;
+            Enabled = true;
+            ScoreQueue.Clear();
             SelectRandomReplay();
             Dispatcher.Enqueue(PrepareReplayAsync);
+        }
+
+        public void SetupWithOverrides(bool screen, bool instaPlay, int delay = -1)
+        {
+            HasScreen = screen;
+            HasDelay = !(instaPlay || delay == 0);
+            Delay = delay;
+            Setup();
         }
 
         public void SelectRandomReplay()
         {
             Dispatcher.Enqueue(() => IsLoaded = false); // This fix seems to have worked for IsPlaying so it should work for IsLoaded too
-            if (Scores.IsEmpty())
+            if (ScoreQueue.IsEmpty())
             {
                 switch (Config.DuplicateReplayPolicy)
                 {
@@ -95,7 +107,7 @@ namespace AwayPlayer
                         CurrentScore = ScoreListManager.FilteredScores[rnd.Next(ScoreListManager.FilteredScores.Length)];
                         return;
                     case DuplicateReplayPolicy.Prevent:
-                        Scores = new Queue<Score>(ScoreListManager.FilteredScores.Shuffle(rnd));
+                        ScoreQueue = new Queue<Score>(ScoreListManager.FilteredScores.Shuffle(rnd));
                         break;
                     case DuplicateReplayPolicy.Strict:
                         Enabled = false;
@@ -105,7 +117,7 @@ namespace AwayPlayer
                         throw new InvalidOperationException(); // What would even cause this.... Well I dont care, InvalidOperationException it is
                 }
             }
-            CurrentScore = Scores.Dequeue();
+            CurrentScore = ScoreQueue.Dequeue();
         }
 
         public void SkipCurrentSelection()
@@ -128,6 +140,7 @@ namespace AwayPlayer
             if (IsLoaded) return;
             if (ReplayerCache.TryReadReplay((int)CurrentScore.Id, out Replay replay))
             {
+                Log.Notice("Cache hit! Succesfully not bothered the API");
                 if (!await ReplayerMenuLoader.Instance.CanLaunchReplay(replay.info))
                 {
                     Log.Warn($"Failed to load replay for {CurrentScore.Song.Name}");
@@ -138,6 +151,11 @@ namespace AwayPlayer
             }
             else if (ReplayDecoder.TryDecodeReplay(await API.GetReplayDataAsync(CurrentScore.Replay), out replay))
             {
+                Log.Notice("Downloaded replay from API. Caching for future use!");
+
+                // Force enable cache so we dont bother the API too much
+                if (!ReplayerCache.TryWriteReplay((int)CurrentScore.Id, replay)) Log.Warn($"Failed to cache replay for {CurrentScore.Song.Name} {CurrentScore.Difficulty.ModeName} {CurrentScore.Difficulty.Name}! ({CurrentScore.Id})");
+
                 if (!await ReplayerMenuLoader.Instance.CanLaunchReplay(replay.info))
                 {
                     Log.Warn($"Failed to load replay for {CurrentScore.Song.Name}");
@@ -153,16 +171,17 @@ namespace AwayPlayer
             lock (this)
             {
                 var levelId = $"custom_level_{CurrentScore.Song.Hash.ToUpper()}";
-                Dispatcher.Enqueue(() => ShowLevelPreview(levelId, CurrentScore.Difficulty.ModeName, CurrentScore.Difficulty.Name));
+                if (HasDelay) Dispatcher.Enqueue(() => ShowLevelPreview(levelId, CurrentScore.Difficulty.ModeName, CurrentScore.Difficulty.Name));
 
                 // Try to cancel in case it is still running
                 Dispatcher.TryCancelDelayedTask(StartJobID);
 
                 // Save the job Id in case we want to cancel
-                StartJobID = Dispatcher.EnqueueWithDelay(StartReplayAsync, Config.StartDelay * 1000, (remaining) =>
+                if (!HasDelay) Dispatcher.Enqueue(StartReplayAsync);
+                else StartJobID = Dispatcher.EnqueueWithDelay(StartReplayAsync, Delay * 1000, (remaining) =>
                 {
-                    FloatingScreen.Timeout = remaining.ToString();
-                }); 
+                    if (HasScreen) FloatingScreen.Timeout = remaining.ToString();
+                });
             }
         }
 
@@ -278,15 +297,20 @@ namespace AwayPlayer
 
         public async Task StartReplayAsync()
         {
-            Log.Debug($"Starting replay...\nEnabled: {Enabled}\nIsPlaying: {IsPlaying}\nIsLoaded: {IsLoaded}");
+            //Log.Debug($"Starting replay...\nEnabled: {Enabled}\nIsPlaying: {IsPlaying}\nIsLoaded: {IsLoaded}");
             if (!Enabled || IsPlaying || !IsLoaded) return;
             await StartReplayAsync(LoadedReplay);
         }
         public async Task StartReplayAsync(Replay replay)
         {
             IsPlaying = true;
-            var player = await WebUtils.SendAndDeserializeAsync<Player>(BEATLEADER_API_URL + "/player/" + replay.info.playerID);
-            await ReplayerMenuLoader.Instance.StartReplayAsync(replay, player, ReplayerSettings.UserSettings);
+            ReplayerLauncher.ReplayWasFinishedEvent += ReplayerLauncher_ReplayWasFinishedEvent;
+
+            // We dont want to bother the API if we already have the player
+#pragma warning disable IDE0074 // Use compound assignment
+            if (Player == null) Player = await WebUtils.SendAndDeserializeAsync<Player>(BEATLEADER_API_URL + "/player/" +  replay.info.playerID);
+#pragma warning restore IDE0074 // Use compound assignment
+            await ReplayerMenuLoader.Instance.StartReplayAsync(replay, replay.info.playerID == "76561198967815164" ? BeatLeader.DataManager.ProfileManager.Profile : Player, ReplayerSettings.UserSettings);
         }
     }
 }

@@ -1,4 +1,5 @@
-﻿using AwayPlayer.Models;
+﻿using AwayPlayer.Managers;
+using AwayPlayer.Models;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using SiraUtil.Logging;
@@ -35,8 +36,12 @@ namespace AwayPlayer
             var userInfo = await BS_Utils.Gameplay.GetUserInfo.GetPlatformUserModel().GetUserInfo();
             var userId = userInfo.platformUserId;
 
+            // If userId of Yippie (iPixel alt), force userId to iPixelGalaxy main account, else normal behaviour
+            // Ask pixel why this is here - DO NOT REMOVE
+            if (userId == "76561199492618833") userId = "76561198967815164";
+
             // User ids used for debugging
-            //userId = "76561198967815164"; // IPixelGalaxy user id
+            //userId = "76561198967815164"; // iPixelGalaxy user id
 
             // Fetch the total number of scores available
             var totalResponse = await HttpService.GetAsync($"https://api.beatleader.xyz/player/{userId}/scores?count=0");

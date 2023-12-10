@@ -1,9 +1,11 @@
 ﻿using AwayPlayer.Installers;
+using HarmonyLib;
 using IPA;
 using IPA.Config;
 using IPA.Config.Stores;
 using SiraUtil.Zenject;
 using System;
+using System.Reflection;
 using IPALogger = IPA.Logging.Logger;
 
 namespace AwayPlayer
@@ -13,7 +15,9 @@ namespace AwayPlayer
     public class Plugin
     {
         internal static IPALogger Logger { get; set; }
-        internal static Version Version = new Version(0,0,1);
+        internal static Harmony Harmony { get; private set; }
+        internal static Assembly Assembly { get; } = Assembly.GetExecutingAssembly();
+        internal static Version Version { get; } = new Version(0, 1, 2);
 
         public static string VersionString => Version.ToString();
 
@@ -29,6 +33,16 @@ namespace AwayPlayer
             zenject.Install<APMenuInstaller>(Location.Menu);
         }
 
+        [OnStart]
+        public void OnStart()
+        {
+            Harmony = new Harmony("Arimodu.AwayPlayer");
+            //Harmony.PatchAll(Assembly); // Will patch on first focus / defocus cycle
+        }
+
+        [OnExit]
+        public void OnExit() => Harmony.UnpatchAll();
+
         /* TODO:
          * - Caching???
          * - Handle
@@ -43,6 +57,6 @@ namespace AwayPlayer
          * - Picks / Bans
          * - Small menu integration
          * 
-        */ 
+        */
     }
 }

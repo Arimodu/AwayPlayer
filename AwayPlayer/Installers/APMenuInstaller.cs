@@ -10,7 +10,9 @@ namespace AwayPlayer.Installers
     {
         public override void InstallBindings()
         {
+            Container.BindInterfacesAndSelfTo<DatabaseManager>().AsSingle();
             Container.BindInterfacesAndSelfTo<CacheManager<Score>>().AsSingle();
+            Container.BindInterfacesAndSelfTo<WhitelistBlacklistManager>().AsSingle();
             Container.BindInterfacesAndSelfTo<APIWrapper>().AsSingle();
             Container.BindInterfacesAndSelfTo<ScoreListManager>().AsSingle();
             Container.BindInterfacesAndSelfTo<ReplayManager>().AsSingle();
@@ -18,7 +20,8 @@ namespace AwayPlayer.Installers
             Container.BindInterfacesAndSelfTo<APMainMenu>().FromNewComponentAsViewController().AsSingle();
             Container.BindInterfacesAndSelfTo<APSettingsMainViewController>().FromNewComponentAsViewController().AsSingle();
             Container.BindInterfacesAndSelfTo<APSettingsFlowCoordinator>().FromNewComponentOnNewGameObject().AsSingle();
-            Container.BindInterfacesAndSelfTo<ArgReplayStarter>().AsSingle();
+            Container.BindInterfacesAndSelfTo<MenuButtonManager>().FromNewComponentAsViewController().AsSingle();
+            Container.BindInterfacesAndSelfTo<ArgParser>().AsSingle();
         }
     }
 }

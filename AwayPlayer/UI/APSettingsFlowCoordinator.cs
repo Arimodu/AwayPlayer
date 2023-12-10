@@ -43,7 +43,7 @@ namespace AwayPlayer.UI
             ScoreListManager.OnScorelistUpdated += ScoreListManager_OnScorelistUpdated;
         }
 
-        private void ScoreListManager_OnScorelistUpdated(Models.Score[] obj)
+        private void ScoreListManager_OnScorelistUpdated()
         {
             ScoreListManager.OnScorelistUpdated -= ScoreListManager_OnScorelistUpdated; // Only the first time is needed
             APButton.Interactable = true;

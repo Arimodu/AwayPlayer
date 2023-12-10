@@ -1,7 +1,6 @@
 ﻿using AwayPlayer.Managers;
 using AwayPlayer.Models;
 using BeatSaberMarkupLanguage.Attributes;
-using BeatSaberMarkupLanguage.GameplaySetup;
 using BeatSaberMarkupLanguage.ViewControllers;
 using HMUI;
 using System;
@@ -11,7 +10,6 @@ using TMPro;
 using Zenject;
 
 #pragma warning disable IDE0051 // Remove unused private members
-#pragma warning disable IDE0052 // Remove unread private members
 #pragma warning disable IDE0044 // Set field readonly
 namespace AwayPlayer.UI
 {
@@ -65,10 +63,10 @@ namespace AwayPlayer.UI
         {
             _scoreListManager.OnScorelistUpdated += ScoreListManager_OnScorelistUpdated;
             _scoreListManager.OnScorelistUpdated += RefreshDropdowns;
-            GameplaySetup.instance.AddTab("AwayPlayer", "AwayPlayer.UI.BSML.StartButtonView.bsml", this);
+            //GameplaySetup.instance.AddTab("AwayPlayer", "AwayPlayer.UI.BSML.StartButtonView.bsml", this);
         }
 
-        private void RefreshDropdowns(Score[] obj)
+        private void RefreshDropdowns()
         {
             _scoreListManager.OnScorelistUpdated -= RefreshDropdowns;
             Playlists.Clear();
@@ -83,16 +81,16 @@ namespace AwayPlayer.UI
             FavoritesOnly = Config.FavoritesOnly;
         }
 
-        private void ScoreListManager_OnScorelistUpdated(Score[] filteredScores)
+        private void ScoreListManager_OnScorelistUpdated()
         {
             if (wasActivatedBefore)
             {
-                TotalFilteredText.text = $"Total: {_scoreListManager.AllScores.Count} : {filteredScores.Length} Filtered";
+                TotalFilteredText.text = $"Total: {_scoreListManager.AllScores.Count} : {_scoreListManager.FilteredScores.Length} Filtered";
                 RefreshLoadingIndicator.gameObject.SetActive(false);
             }
             else didActivate = (x, y, z) =>
             {
-                TotalFilteredText.text = $"Total: {_scoreListManager.AllScores.Count} : {filteredScores.Length} Filtered";
+                TotalFilteredText.text = $"Total: {_scoreListManager.AllScores.Count} : {_scoreListManager.FilteredScores.Length} Filtered";
                 RefreshLoadingIndicator.gameObject.SetActive(false);
             };
         }
@@ -101,7 +99,6 @@ namespace AwayPlayer.UI
         private void EnableButton()
         {
             if (_replayManager.Enabled) return;
-            _replayManager.Enabled = true;
             _replayManager.Setup();
             _menuFloatingScreen.Visible = true;
         }

@@ -144,6 +144,11 @@
       <HintPath>$(BeatSaberDir)\Beat Saber_Data\Managed\UnityEngine.CoreModule.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="UnityEngine.InputLegacyModule">
+      <HintPath>$(BeatSaberDir)\Beat Saber_Data\Managed\UnityEngine.InputLegacyModule.dll</HintPath>
+      <Private>False</Private>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
     <Reference Include="UnityEngine.UI">
       <HintPath>$(BeatSaberDir)\Beat Saber_Data\Managed\UnityEngine.UI.dll</HintPath>
       <Private>False</Private>
@@ -175,9 +180,13 @@
     <Compile Include="APConfig.cs" />
     <Compile Include="APIWrapper.cs" />
     <Compile Include="Converters\StringEnumConverter.cs" />
+    <Compile Include="HarmonyPatches\DontEatMyCursor.cs" />
     <Compile Include="Installers\APAppInstaller.cs" />
     <Compile Include="Installers\APMenuInstaller.cs" />
     <Compile Include="Managers\CacheManager.cs" />
+    <Compile Include="Managers\DatabaseManager.cs" />
+    <Compile Include="Managers\WhitelistBlacklistManager.cs" />
+    <Compile Include="Models\PlaylistFilter.cs" />
     <Compile Include="Models\ScoreFilterSettings.cs" />
     <Compile Include="Managers\ScoreListManager.cs" />
     <Compile Include="Models\Difficulty.cs" />
@@ -190,8 +199,10 @@
     <Compile Include="UI\APMenuFloatingScreen.cs" />
     <Compile Include="UI\APSettingsFlowCoordinator.cs" />
     <Compile Include="UI\APSettingsMainViewController.cs" />
-    <Compile Include="Utils\ArgReplayStarter.cs" />
+    <Compile Include="UI\MenuButtonManager.cs" />
+    <Compile Include="Utils\ArgParser.cs" />
     <Compile Include="Utils\UnityMainThreadScheduler.cs" />
+    <Compile Include="Utils\WindowUtils.cs" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="manifest.json" />

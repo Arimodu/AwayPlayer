@@ -10,6 +10,8 @@ namespace AwayPlayer
         public virtual bool DisableDeveloperNameText { get; set; } = false;
         public string Playlist { get; set; } = "None";
         public bool FavoritesOnly { get; set; } = false;
+        public bool WhitelistEnable { get; set; } = true;
+        public bool BlacklistEnable { get; set; } = true;
         public int StartDelay { get; set; } = 3;
 
         [UseConverter(typeof(StringEnumConverter<DuplicateReplayPolicy>))]

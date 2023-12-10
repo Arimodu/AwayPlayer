@@ -20,7 +20,7 @@ namespace AwayPlayer.UI
     internal class APMenuFloatingScreen : BSMLAutomaticViewController, IInitializable
     {
         private FloatingScreen _floatingScreen;
-        private FloatingScreen _floatingButton;
+        //private FloatingScreen _floatingButton;
 
         [Inject]
         private readonly ReplayManager _replayManager;

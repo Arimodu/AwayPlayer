@@ -17,25 +17,34 @@ namespace AwayPlayer.Managers
         private readonly SiraLog Log;
         private readonly APConfig Config;
         private readonly UnityMainThreadDispatcher Dispatcher;
-        private readonly CacheManager<Score> ScoreCache;
+        private readonly WhitelistBlacklistManager WBMgr;
+        private Score[] _filteredScores = new Score[0];
 
         internal IPlaylist[] Playlists;
 
-        public Score[] FilteredScores { get; private set; }
+        public Score[] FilteredScores 
+        {
+            get => _filteredScores;
+            private set 
+            {
+                Log.Info("FilteredScores: " + FilteredScores.Length);
+                _filteredScores = value;
+            } 
+        }
         public List<Score> AllScores { get; private set; }
 
         public bool IsReady { get; private set; } = false;
 
-        public event Action<Score[]> OnScorelistUpdated;
+        public event Action OnScorelistUpdated;
 
-        public ScoreListManager(PlayerDataModel playerDataModel, APIWrapper wrapper, SiraLog siraLog, APConfig config, UnityMainThreadDispatcher dispatcher, CacheManager<Score> scoreCache) 
+        public ScoreListManager(PlayerDataModel playerDataModel, APIWrapper wrapper, SiraLog siraLog, APConfig config, UnityMainThreadDispatcher dispatcher, WhitelistBlacklistManager whitelistBlacklistManager) 
         { 
             _playerData = playerDataModel.playerData;
             API = wrapper;
             Log = siraLog;
             Config = config;
             Dispatcher = dispatcher;
-            ScoreCache = scoreCache;
+            WBMgr = whitelistBlacklistManager;
 #if DEBUG
             Log.DebugMode = true;
 #endif
@@ -61,17 +70,29 @@ namespace AwayPlayer.Managers
             Reload(new ScoreFilterSettings(Config.FavoritesOnly, Config.Playlist, Config.HMD, Config.Controller));
         }
 
+        public void ForceReload()
+        {
+            Reload(new ScoreFilterSettings(Config.FavoritesOnly, Config.Playlist, Config.HMD, Config.Controller));
+        }
+
         private void Reload(ScoreFilterSettings settings)
         {
             Log.Debug($"Reloading ScoreListManager with the following ScoreFilterSettings settings:\n{settings}");
 
-            FilteredScores = FilterScores(AllScores.ToArray(), settings);
+            IsReady = false;
 
-            Dispatcher.Enqueue(() =>
-            {
-                OnScorelistUpdated?.Invoke(FilteredScores);
-                IsReady = true;
-            });
+            var filteredScores = FilterScores(AllScores.ToArray(), settings).ToList();
+
+            var blacklist = WBMgr.GetBlacklist();
+            var whitelist = WBMgr.GetWhitelist();
+
+            if (blacklist.Count > 0) filteredScores.RemoveAll(score => blacklist.Contains(score.Song.Hash.ToUpper()));
+            if (whitelist.Count > 0) filteredScores.AddRange(AllScores.Where(score => whitelist.Contains(score.Song.Hash.ToUpper())));
+
+            FilteredScores = filteredScores.ToArray();
+
+            OnScorelistUpdated?.Invoke();
+            IsReady = true;
 
             Log.Notice($"Score list reload finished\nTotal scores: {AllScores.Count}\nTotal filtered: {FilteredScores.Length}");
         }
