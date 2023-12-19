@@ -1,14 +1,14 @@
 ﻿using AwayPlayer.Managers;
 using BeatSaberMarkupLanguage;
 using BeatSaberMarkupLanguage.Attributes;
-using System;
 using System.Linq;
 using UnityEngine;
 using Zenject;
 
+#pragma warning disable CS0649 // Value is never assigend to - We have zenject
 namespace AwayPlayer.UI
 {
-    internal class MenuButtonManager : BeatSaberMarkupLanguage.Components.NotifiableSingleton<MenuButtonManager>, IInitializable
+    internal class MenuButtonManager : BeatSaberMarkupLanguage.Util.NotifiableSingleton<MenuButtonManager>, IInitializable
     {
         private const string AFK_BUTTON = "" +
             "<bg id='root'>" +

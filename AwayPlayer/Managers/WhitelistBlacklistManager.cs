@@ -2,12 +2,15 @@
 using System;
 using System.Collections.Generic;
 using System.Data.SQLite;
+using System.Threading;
+using System.Threading.Tasks;
 using Zenject;
 
 namespace AwayPlayer.Managers
 {
     public class WhitelistBlacklistManager : IInitializable
     {
+        private readonly IPlatformUserModel _platformUserModel;
         private readonly DatabaseManager DBMgr;
         private string BlacklistTableName;
         private string WhitelistTableName;
@@ -15,26 +18,31 @@ namespace AwayPlayer.Managers
         public List<string> Blacklist { get; private set; }
         public List<string> Whitelist { get; private set; }
 
-        public WhitelistBlacklistManager(SiraLog log, DatabaseManager dbmgr)
+        public WhitelistBlacklistManager(SiraLog log, DatabaseManager dbmgr, IPlatformUserModel platformUserModel)
         {
             Log = log;
             DBMgr = dbmgr;
+            _platformUserModel = platformUserModel;
         }
 
         public void Initialize()
         {
-            var userInfo = BS_Utils.Gameplay.GetUserInfo.GetPlatformUserModel().GetUserInfo();
-            userInfo.Wait();
-            var userId = userInfo.Result.platformUserId;
-            BlacklistTableName = $"Blacklist_{userId}";
-            WhitelistTableName = $"Whitelist_{userId}";
+            Log.Debug($"Initializing the WhitelistBlacklistManager...");
+            Task.Run(async () =>
+            {
+                var userInfo = await _platformUserModel.GetUserInfo(CancellationToken.None);
+                var userId = userInfo.platformUserId;
+                BlacklistTableName = $"Blacklist_{userId}";
+                WhitelistTableName = $"Whitelist_{userId}";
 
-            // Create the table if it doesn't exist
-            using var command = new SQLiteCommand($"CREATE TABLE IF NOT EXISTS {BlacklistTableName} (Id INTEGER PRIMARY KEY AUTOINCREMENT, Key TEXT UNIQUE, Timestamp DATETIME)", DBMgr.Database);
-            ExecuteSQLiteCommand(command, "Creating blacklist table");
+                // Create the table if it doesn't exist
+                using var command = new SQLiteCommand($"CREATE TABLE IF NOT EXISTS {BlacklistTableName} (Id INTEGER PRIMARY KEY AUTOINCREMENT, Key TEXT UNIQUE, Timestamp DATETIME)", DBMgr.Database);
+                ExecuteSQLiteCommand(command, "Creating blacklist table");
 
-            using var command2 = new SQLiteCommand($"CREATE TABLE IF NOT EXISTS {WhitelistTableName} (Id INTEGER PRIMARY KEY AUTOINCREMENT, Key TEXT UNIQUE, Timestamp DATETIME)", DBMgr.Database);
-            ExecuteSQLiteCommand(command2, "Creating whitelist table");
+                using var command2 = new SQLiteCommand($"CREATE TABLE IF NOT EXISTS {WhitelistTableName} (Id INTEGER PRIMARY KEY AUTOINCREMENT, Key TEXT UNIQUE, Timestamp DATETIME)", DBMgr.Database);
+                ExecuteSQLiteCommand(command2, "Creating whitelist table");
+            }).Wait();
+            Log.Debug($"WhitelistBlacklistManager Ready");
         }
 
         private void ExecuteSQLiteCommand(SQLiteCommand command, string actionDescription)

@@ -3,10 +3,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Unity.Jobs;
 using UnityEngine;
 using Zenject;
 
+#pragma warning disable CS0649 // Value is never assigend to - We have zenject
 public class UnityMainThreadDispatcher : ITickable
 {
     [Inject]

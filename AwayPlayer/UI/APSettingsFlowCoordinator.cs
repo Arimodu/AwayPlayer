@@ -4,6 +4,7 @@ using BeatSaberMarkupLanguage.MenuButtons;
 using HMUI;
 using Zenject;
 
+#pragma warning disable CS0649 // Value is never assigend to - We have zenject
 namespace AwayPlayer.UI
 {
     internal class APSettingsFlowCoordinator : FlowCoordinator, IInitializable

@@ -12,7 +12,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using UnityEngine;
-using static BeatLeader.Utils.BeatLeaderConstants;
+using static BeatLeader.Utils.BLConstants;
 using Random = System.Random;
 using Score = AwayPlayer.Models.Score;
 
@@ -107,7 +107,15 @@ namespace AwayPlayer
                         CurrentScore = ScoreListManager.FilteredScores[rnd.Next(ScoreListManager.FilteredScores.Length)];
                         return;
                     case DuplicateReplayPolicy.Prevent:
-                        ScoreQueue = new Queue<Score>(ScoreListManager.FilteredScores.Shuffle(rnd));
+                        var orderedList = ScoreListManager.FilteredScores.OrderBy((score) => score.Id).ToList();
+                        var list = new List<Score>();
+                        while (orderedList.Count > 0)
+                        {
+                            var num = rnd.Next(0, orderedList.Count);
+                            list.Add(orderedList[num]);
+                            orderedList.RemoveAt(num);
+                        }
+                        ScoreQueue = new Queue<Score>(list);
                         break;
                     case DuplicateReplayPolicy.Strict:
                         Enabled = false;
