@@ -1,18 +1,13 @@
 ﻿using BeatSaberMarkupLanguage.Attributes;
 using BeatSaberMarkupLanguage.FloatingScreen;
-using BeatSaberMarkupLanguage.Tags;
 using BeatSaberMarkupLanguage.ViewControllers;
-using IPA.Config.Data;
-using SiraUtil.Logging;
-using System;
-using System.IO;
 using TMPro;
-using Tweening;
 using UnityEngine;
 using UnityEngine.UI;
 using Zenject;
 
 #pragma warning disable IDE0051 // Remove unused private members
+#pragma warning disable CS0649 // Value is never assigend to - We have zenject
 namespace AwayPlayer.UI
 {
     [ViewDefinition("AwayPlayer.UI.BSML.MenuFloatingScreen.bsml")]
@@ -31,13 +26,10 @@ namespace AwayPlayer.UI
         [Inject]
         private readonly APConfig _config;
 
-        [Inject]
-        private readonly TimeTweeningManager _timeTweeningManager;
-
-#if DEBUG
-        [Inject]
-        private readonly SiraLog _log;
-#endif
+//#if DEBUG
+//        [Inject]
+//        private readonly SiraLog _log;
+//#endif
 
         [UIComponent("StartingInTime")]
         private readonly TextMeshProUGUI TimeoutText;
@@ -54,8 +46,8 @@ namespace AwayPlayer.UI
         [UIComponent("ResumeButton")]
         private readonly Button ResumeButton;
 
-        [UIComponent("RecreateButton")]
-        private readonly Button RecreateButton;
+        //[UIComponent("RecreateButton")]
+        //private readonly Button RecreateButton;
 
         public string Timeout
         {
@@ -91,7 +83,7 @@ namespace AwayPlayer.UI
             _floatingScreen.handle.SetActive(false);
             Visible = false;
 
-            didActivate = (x, y, z) =>
+            didActivateEvent += (x, y, z) =>
             {
                 TitleText.text = $"AwayPlayer v{Plugin.VersionString}";
                 NameText.text = $"AwayPlayer v{Plugin.VersionString} by Arimodu";
@@ -140,40 +132,40 @@ namespace AwayPlayer.UI
             PauseButton.gameObject.SetActive(true);
         }
 
-        [UIAction("RecreateThis")]
-        private void RecreateThis()
-        {
-#if DEBUG
-            try
-            {
-                var path = "./UserData/AwayPlayerScreenCoordinatesDebugFile.txt";
-                if (!File.Exists(path))
-                {
-                    string x = "70,50,-2,3.5,2,300,0,0";
-                    File.WriteAllText(path, x);
-                }
+//        [UIAction("RecreateThis")]
+//        private void RecreateThis()
+//        {
+//#if DEBUG
+//            try
+//            {
+//                var path = "./UserData/AwayPlayerScreenCoordinatesDebugFile.txt";
+//                if (!File.Exists(path))
+//                {
+//                    string x = "70,50,-2,3.5,2,300,0,0";
+//                    File.WriteAllText(path, x);
+//                }
 
-                var text = File.ReadAllText(path);
-                var parts = text.Split(',');
-                var width = float.Parse(parts[0]);
-                var height = float.Parse(parts[1]);
-                var posX = float.Parse(parts[2]);
-                var posY = float.Parse(parts[3]);
-                var posZ = float.Parse(parts[4]);
-                var angX = float.Parse(parts[5]);
-                var angY = float.Parse(parts[6]);
-                var angZ = float.Parse(parts[7]);
-                _floatingScreen = null;
+//                var text = File.ReadAllText(path);
+//                var parts = text.Split(',');
+//                var width = float.Parse(parts[0]);
+//                var height = float.Parse(parts[1]);
+//                var posX = float.Parse(parts[2]);
+//                var posY = float.Parse(parts[3]);
+//                var posZ = float.Parse(parts[4]);
+//                var angX = float.Parse(parts[5]);
+//                var angY = float.Parse(parts[6]);
+//                var angZ = float.Parse(parts[7]);
+//                _floatingScreen = null;
 
-                _floatingScreen = FloatingScreen.CreateFloatingScreen(new Vector2(width, height), false, new Vector3(posX, posY, posZ), Quaternion.Euler(new Vector3(angX, angY, angZ)));
-                _floatingScreen.gameObject.SetActive(true);
-                _floatingScreen.SetRootViewController(this,AnimationType.In);
-            }
-            catch (Exception e)
-            {
-                _log.Error(e);
-            } 
-#endif
-        }
+//                _floatingScreen = FloatingScreen.CreateFloatingScreen(new Vector2(width, height), false, new Vector3(posX, posY, posZ), Quaternion.Euler(new Vector3(angX, angY, angZ)));
+//                _floatingScreen.gameObject.SetActive(true);
+//                _floatingScreen.SetRootViewController(this,AnimationType.In);
+//            }
+//            catch (Exception e)
+//            {
+//                _log.Error(e);
+//            } 
+//#endif
+//        }
     }
 }

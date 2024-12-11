@@ -11,6 +11,7 @@ using Zenject;
 
 #pragma warning disable IDE0051 // Remove unused private members
 #pragma warning disable IDE0044 // Set field readonly
+#pragma warning disable CS0649 // Value is never assigend to - We have zenject
 namespace AwayPlayer.UI
 {
     [ViewDefinition("AwayPlayer.UI.BSML.MainMenu.bsml")]
@@ -25,9 +26,6 @@ namespace AwayPlayer.UI
 
         [Inject]
         private readonly ScoreListManager _scoreListManager;
-
-        [Inject]
-        private readonly UnityMainThreadDispatcher _unityMainThreadDispatcher;
 
         [Inject]
         private readonly APConfig Config;
@@ -88,7 +86,7 @@ namespace AwayPlayer.UI
                 TotalFilteredText.text = $"Total: {_scoreListManager.AllScores.Count} : {_scoreListManager.FilteredScores.Length} Filtered";
                 RefreshLoadingIndicator.gameObject.SetActive(false);
             }
-            else didActivate = (x, y, z) =>
+            else didActivateEvent += (x, y, z) =>
             {
                 TotalFilteredText.text = $"Total: {_scoreListManager.AllScores.Count} : {_scoreListManager.FilteredScores.Length} Filtered";
                 RefreshLoadingIndicator.gameObject.SetActive(false);

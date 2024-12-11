@@ -20,7 +20,7 @@ namespace AwayPlayer.Installers
             Container.BindInterfacesAndSelfTo<APMainMenu>().FromNewComponentAsViewController().AsSingle();
             Container.BindInterfacesAndSelfTo<APSettingsMainViewController>().FromNewComponentAsViewController().AsSingle();
             Container.BindInterfacesAndSelfTo<APSettingsFlowCoordinator>().FromNewComponentOnNewGameObject().AsSingle();
-            Container.BindInterfacesAndSelfTo<MenuButtonManager>().FromNewComponentAsViewController().AsSingle();
+            Container.BindInterfacesAndSelfTo<MenuButtonManager>().AsSingle();
             Container.BindInterfacesAndSelfTo<ArgParser>().AsSingle();
         }
     }

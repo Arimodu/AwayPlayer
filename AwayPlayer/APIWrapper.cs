@@ -6,12 +6,14 @@ using SiraUtil.Logging;
 using SiraUtil.Web;
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace AwayPlayer
 {
     internal class APIWrapper
     {
+        private readonly IPlatformUserModel _platformUserModel;
         private readonly CacheManager<Score> ScoreCache;
         private readonly IHttpService HttpService;
         private readonly SiraLog SiraLogger;
@@ -20,11 +22,12 @@ namespace AwayPlayer
         private readonly int RateLimitCount = 9;
         private readonly int BatchSize = 100;
 
-        public APIWrapper(SiraLog siraLog, IHttpService httpService, CacheManager<Score> scoreCache)
+        public APIWrapper(SiraLog siraLog, IHttpService httpService, CacheManager<Score> scoreCache, IPlatformUserModel platformUserModel)
         {
             SiraLogger = siraLog;
             HttpService = httpService;
             ScoreCache = scoreCache;
+            _platformUserModel = platformUserModel;
 #if DEBUG
             SiraLogger.DebugMode = true;
 #endif
@@ -33,7 +36,7 @@ namespace AwayPlayer
         public async Task<List<Score>> GetReplayListAsync()
         {
             // Get the player UserId
-            var userInfo = await BS_Utils.Gameplay.GetUserInfo.GetPlatformUserModel().GetUserInfo();
+            var userInfo = await _platformUserModel.GetUserInfo(CancellationToken.None);
             var userId = userInfo.platformUserId;
 
             // If userId of iPixelGalaxy alt, force userId to iPixelGalaxy main account, else normal behaviour

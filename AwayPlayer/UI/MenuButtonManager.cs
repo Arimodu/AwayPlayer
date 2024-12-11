@@ -1,14 +1,15 @@
 ﻿using AwayPlayer.Managers;
 using BeatSaberMarkupLanguage;
 using BeatSaberMarkupLanguage.Attributes;
-using System;
+using BeatSaberMarkupLanguage.ViewControllers;
 using System.Linq;
 using UnityEngine;
 using Zenject;
 
+#pragma warning disable CS0649 // Value is never assigend to - We have zenject
 namespace AwayPlayer.UI
 {
-    internal class MenuButtonManager : BeatSaberMarkupLanguage.Components.NotifiableSingleton<MenuButtonManager>, IInitializable
+    internal class MenuButtonManager : BSMLAutomaticViewController, IInitializable
     {
         private const string AFK_BUTTON = "" +
             "<bg id='root'>" +
@@ -101,17 +102,17 @@ namespace AwayPlayer.UI
 
         public void Initialize()
         {
-            BSMLParser.instance.Parse(AFK_BUTTON, Resources.FindObjectsOfTypeAll<LevelSelectionNavigationController>().First().gameObject, this);
+            BSMLParser.Instance.Parse(AFK_BUTTON, Resources.FindObjectsOfTypeAll<LevelSelectionNavigationController>().First().gameObject, this);
             var standardLevel = Resources.FindObjectsOfTypeAll<StandardLevelDetailViewController>().First(); // Stolen from song core, thank you ;)
             if (_config.BlacklistEnable)
             {
-                BSMLParser.instance.Parse(BLACKLIST_BUTTON, standardLevel.transform.Find("LevelDetail").gameObject, this);
-                BSMLParser.instance.Parse(PRIMARY_BLACKLIST_BUTTON, standardLevel.transform.Find("LevelDetail").gameObject, this);
+                BSMLParser.Instance.Parse(BLACKLIST_BUTTON, standardLevel.transform.Find("LevelDetail").gameObject, this);
+                BSMLParser.Instance.Parse(PRIMARY_BLACKLIST_BUTTON, standardLevel.transform.Find("LevelDetail").gameObject, this);
             }
             if (_config.WhitelistEnable)
             {
-                BSMLParser.instance.Parse(WHITELIST_BUTTON, standardLevel.transform.Find("LevelDetail").gameObject, this);
-                BSMLParser.instance.Parse(PRIMARY_WHITELIST_BUTTON, standardLevel.transform.Find("LevelDetail").gameObject, this);
+                BSMLParser.Instance.Parse(WHITELIST_BUTTON, standardLevel.transform.Find("LevelDetail").gameObject, this);
+                BSMLParser.Instance.Parse(PRIMARY_WHITELIST_BUTTON, standardLevel.transform.Find("LevelDetail").gameObject, this);
             }
 
             var controller = Resources.FindObjectsOfTypeAll<StandardLevelDetailViewController>().First();

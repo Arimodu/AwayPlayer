@@ -43,11 +43,19 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="BepInEx.AssemblyPublicizer.MSBuild" Version="0.4.1" PrivateAssets="all" />
+    <PackageReference Include="ILRepack.Lib.MSBuild.Task">
+      <Version>2.0.18.2</Version>
+    </PackageReference>
     <PackageReference Include="System.Data.SQLite">
       <Version>1.0.118</Version>
     </PackageReference>
     <Reference Include="BeatLeader" Publicize="true">
       <HintPath>$(BeatSaberDir)\Plugins\BeatLeader.dll</HintPath>
+      <Private>False</Private>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
+    <Reference Include="BeatSaber.ViewSystem">
+      <HintPath>$(BeatSaberDir)\Beat Saber_Data\Managed\BeatSaber.ViewSystem.dll</HintPath>
       <Private>False</Private>
       <SpecificVersion>False</SpecificVersion>
     </Reference>
@@ -69,6 +77,11 @@
     </Reference>
     <Reference Include="BS_Utils">
       <HintPath>$(BeatSaberDir)\Plugins\BS_Utils.dll</HintPath>
+      <Private>False</Private>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
+    <Reference Include="DataModels">
+      <HintPath>$(BeatSaberDir)\Beat Saber_Data\Managed\DataModels.dll</HintPath>
       <Private>False</Private>
       <SpecificVersion>False</SpecificVersion>
     </Reference>
@@ -99,7 +112,15 @@
       <SpecificVersion>False</SpecificVersion>
     </Reference>
     <Reference Include="Newtonsoft.Json">
-      <HintPath>$(BeatSaberDir)\Libs\Newtonsoft.Json.dll</HintPath>
+      <HintPath>$(BeatSaberDir)\Beat Saber_Data\Managed\Newtonsoft.Json.dll</HintPath>
+      <Private>False</Private>
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
+    <Reference Include="PlatformUserModel">
+      <HintPath>$(BeatSaberDir)\Beat Saber_Data\Managed\PlatformUserModel.dll</HintPath>
+    </Reference>
+    <Reference Include="SegmentedControl">
+      <HintPath>$(BeatSaberDir)\Beat Saber_Data\Managed\SegmentedControl.dll</HintPath>
       <Private>False</Private>
       <SpecificVersion>False</SpecificVersion>
     </Reference>
@@ -180,7 +201,6 @@
     <Compile Include="APConfig.cs" />
     <Compile Include="APIWrapper.cs" />
     <Compile Include="Converters\StringEnumConverter.cs" />
-    <Compile Include="HarmonyPatches\DontEatMyCursor.cs" />
     <Compile Include="Installers\APAppInstaller.cs" />
     <Compile Include="Installers\APMenuInstaller.cs" />
     <Compile Include="Managers\CacheManager.cs" />
@@ -214,6 +234,7 @@
     <EmbeddedResource Include="UI\BSML\MenuFloatingScreen.bsml" />
     <EmbeddedResource Include="UI\BSML\SettingsMainView.bsml" />
     <EmbeddedResource Include="UI\BSML\StartButtonView.bsml" />
+    <None Include="ILRepack.Config.props" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="BeatSaberModdingTools.Tasks">

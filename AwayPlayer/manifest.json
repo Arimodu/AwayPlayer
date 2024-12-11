@@ -9,7 +9,6 @@
   "dependsOn": {
     "BSIPA": "^4.2.0",
     "SiraUtil": "^3.1.2",
-    "BS Utils": "^1.12.2",
     "BeatLeader": "^0.9.0"
   }
 }

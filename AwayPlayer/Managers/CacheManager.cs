@@ -1,29 +1,41 @@
 ﻿using Newtonsoft.Json;
+using SiraUtil.Logging;
 using System;
 using System.Collections.Generic;
 using System.Data.SQLite;
 using System.Linq;
 using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 using Zenject;
 
+#pragma warning disable CS0649 // Value is never assigend to - We have zenject
 namespace AwayPlayer.Managers
 {
     public class CacheManager<T> : IInitializable where T : class
     {
         [Inject]
         private readonly DatabaseManager DBMgr;
+        [Inject]
+        private readonly SiraLog Log;
+        [Inject]
+        private readonly IPlatformUserModel _platformUserModel;
         private string _tableName;
 
         public void Initialize()
         {
-            var userInfo = BS_Utils.Gameplay.GetUserInfo.GetPlatformUserModel().GetUserInfo();
-            userInfo.Wait();
-            var userId = userInfo.Result.platformUserId;
-            _tableName = $"{typeof(T).Name}Cache_{userId}";
+            Log.Debug($"Initializing CacheManager<{typeof(T)}>...");
+            Task.Run(async () =>
+            {
+                var userInfo = await _platformUserModel.GetUserInfo(CancellationToken.None);
+                var userId = userInfo.platformUserId;
+                _tableName = $"{typeof(T).Name}Cache_{userId}";
 
-            // Create the table if it doesn't exist
-            using var command = new SQLiteCommand($"CREATE TABLE IF NOT EXISTS {_tableName} (Id INTEGER PRIMARY KEY AUTOINCREMENT, Key TEXT UNIQUE, Value BLOB, Timestamp DATETIME)", DBMgr.Database);
-            command.ExecuteNonQuery();
+                // Create the table if it doesn't exist
+                using var command = new SQLiteCommand($"CREATE TABLE IF NOT EXISTS {_tableName} (Id INTEGER PRIMARY KEY AUTOINCREMENT, Key TEXT UNIQUE, Value BLOB, Timestamp DATETIME)", DBMgr.Database);
+                command.ExecuteNonQuery();
+            }).Wait();
+            Log.Debug($"CacheManager<{typeof(T)}> Ready");
         }
 
         public void AddOrUpdateCache(string leaderboardId, T value) 
