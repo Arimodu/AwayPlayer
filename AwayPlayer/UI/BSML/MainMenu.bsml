@@ -12,6 +12,7 @@
 		<vertical>
 			<text font-align='Center' id='TotalFilteredText'/>
 			<button on-click='Reload' text='Reload'/>
+			<button on-click='Generate' text='Generate Playlists'/>
 		</vertical>
 	</vertical>
 </bg>

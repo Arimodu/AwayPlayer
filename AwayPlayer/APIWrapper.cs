@@ -36,15 +36,15 @@ namespace AwayPlayer
             var userInfo = await BS_Utils.Gameplay.GetUserInfo.GetPlatformUserModel().GetUserInfo();
             var userId = userInfo.platformUserId;
 
-            // If userId of Yippie (iPixel alt), force userId to iPixelGalaxy main account, else normal behaviour
+            // If userId of iPixelGalaxy alt, force userId to iPixelGalaxy main account, else normal behaviour
             // Ask pixel why this is here - DO NOT REMOVE
-            if (userId == "76561199492618833") userId = "76561198967815164";
+            if (userId == "76561199480289698") userId = "76561198967815164";
 
             // User ids used for debugging
             //userId = "76561198967815164"; // iPixelGalaxy user id
 
             // Fetch the total number of scores available
-            var totalResponse = await HttpService.GetAsync($"https://api.beatleader.xyz/player/{userId}/scores?count=0");
+            var totalResponse = await HttpService.GetAsync($"https://api.beatleader.xyz/player/{userId}/scores?count=0&sortBy=date");
             string totalJsonData = await totalResponse.ReadAsStringAsync();
             int total = JObject.Parse(totalJsonData)["metadata"]["total"].Value<int>();
 
@@ -67,7 +67,7 @@ namespace AwayPlayer
             for (int i = 0; i < requestsNeeded; i++)
             {
                 var page = i + 1; // Pages start from 1
-                string fetchUri = $"https://api.beatleader.xyz/player/{userId}/scores?count={BatchSize}&page={page}";
+                string fetchUri = $"https://api.beatleader.xyz/player/{userId}/scores?count={BatchSize}&page={page}&sortBy=date";
 
                 SiraLogger.Debug($"Fetching from: {fetchUri}");
 

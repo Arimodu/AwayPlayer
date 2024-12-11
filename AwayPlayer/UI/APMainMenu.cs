@@ -114,6 +114,12 @@ namespace AwayPlayer.UI
             Task.Run(Config.Changed);
         }
 
+        [UIAction("Generate")]
+        internal void Generate()
+        {
+            _scoreListManager.GeneratePlaylists();
+        }
+
         //[UIAction("ByPlaylistChanged")]
         //private void ByPlaylistChanged(string value)
         //{

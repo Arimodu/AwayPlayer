@@ -3,6 +3,7 @@ using BeatSaberPlaylistsLib.Types;
 using SiraUtil.Logging;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Zenject;
@@ -95,6 +96,40 @@ namespace AwayPlayer.Managers
             IsReady = true;
 
             Log.Notice($"Score list reload finished\nTotal scores: {AllScores.Count}\nTotal filtered: {FilteredScores.Length}");
+        }
+
+        public void GeneratePlaylists()
+        {
+            try
+            {
+                var allPlaylist = BeatSaberPlaylistsLib.PlaylistManager.DefaultManager.DefaultHandler.CreatePlaylist("AllPlayed - Awayplayer", "AllPlayed - AwayPlayer", "AwayPlayer", string.Empty);
+                BeatSaberPlaylistsLib.PlaylistManager.DefaultManager.StorePlaylist(allPlaylist);
+                allPlaylist.AllowDuplicates = false;
+                var created = BeatSaberPlaylistsLib.PlaylistManager.DefaultManager.RegisterPlaylist(allPlaylist);
+                BeatSaberPlaylistsLib.PlaylistManager.DefaultManager.StorePlaylist(allPlaylist);
+
+                if (!created) Log.Error("Failed to register / create playlist");
+
+                foreach (var item in AllScores)
+                {
+                    try
+                    {
+                        var addedSong = allPlaylist.Add(item.Song.Hash, item.Song.Name, item.Song.Id, item.Song.Mapper);
+                        Log.Debug($"Success adding {addedSong.Name} to the all songs playlist!");
+                    }
+                    catch (Exception e)
+                    {
+                        Log.Error(e);
+                    }
+                }
+
+                BeatSaberPlaylistsLib.PlaylistManager.DefaultManager.StorePlaylist(allPlaylist);
+                BeatSaberPlaylistsLib.PlaylistManager.DefaultManager.RefreshPlaylists(true);
+            }
+            catch (Exception e)
+            {
+                Log.Error(e);
+            }
         }
 
         public Score[] FilterScores(Score[] scores, ScoreFilterSettings settings)
