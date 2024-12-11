@@ -16,7 +16,6 @@ namespace AwayPlayer.Managers
         private readonly APIWrapper API;
         private readonly SiraLog Log;
         private readonly APConfig Config;
-        private readonly UnityMainThreadDispatcher Dispatcher;
         private readonly WhitelistBlacklistManager WBMgr;
         private Score[] _filteredScores = new Score[0];
 
@@ -37,13 +36,12 @@ namespace AwayPlayer.Managers
 
         public event Action OnScorelistUpdated;
 
-        public ScoreListManager(PlayerDataModel playerDataModel, APIWrapper wrapper, SiraLog siraLog, APConfig config, UnityMainThreadDispatcher dispatcher, WhitelistBlacklistManager whitelistBlacklistManager) 
+        public ScoreListManager(PlayerDataModel playerDataModel, APIWrapper wrapper, SiraLog siraLog, APConfig config, WhitelistBlacklistManager whitelistBlacklistManager) 
         { 
             _playerData = playerDataModel.playerData;
             API = wrapper;
             Log = siraLog;
             Config = config;
-            Dispatcher = dispatcher;
             WBMgr = whitelistBlacklistManager;
 #if DEBUG
             Log.DebugMode = true;

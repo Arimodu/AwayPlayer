@@ -1,5 +1,4 @@
 ﻿using AwayPlayer.Managers;
-using AwayPlayer.Models;
 using AwayPlayer.UI;
 using BeatLeader.Models;
 using BeatLeader.Models.Replay;
@@ -8,7 +7,6 @@ using BeatSaverSharp;
 using BeatSaverSharp.Models;
 using HMUI;
 using SiraUtil.Logging;
-using SiraUtil.Web;
 using System;
 using System.IO;
 using System.IO.Compression;
@@ -80,7 +78,7 @@ namespace AwayPlayer.Utils
         private async void LoadReplayAsync()
         {
             var args = Environment.GetCommandLineArgs();
-            var url = args[args.IndexOf("--replay") + 1];
+            var url = args[Array.IndexOf(args, "--replay") + 1];
 
             SiraLogger.Debug($"Preparing replay from {url}");
 
@@ -122,7 +120,7 @@ namespace AwayPlayer.Utils
         {
             // A workaround for the max path issue and long folder names
             var longFolderName = song.ID + " (" + song.Metadata.SongName + " - " + song.Metadata.LevelAuthorName;
-            return longFolderName.Truncate(49, true) + ")";
+            return longFolderName + ")";
         }
         private async Task ExtractZipAsync(byte[] zip, string customSongsPath, string songName, bool overwrite = false)
         {
