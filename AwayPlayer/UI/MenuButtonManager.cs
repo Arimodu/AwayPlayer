@@ -122,12 +122,12 @@ namespace AwayPlayer.UI
 
         private void OnContentChanged(StandardLevelDetailViewController controller, StandardLevelDetailViewController.ContentType type)
         {
-            if (type == StandardLevelDetailViewController.ContentType.OwnedAndReady) UpdateButtons(controller._previewBeatmapLevel.levelID.Remove(0, 13).ToUpper());
+            if (type == StandardLevelDetailViewController.ContentType.OwnedAndReady) UpdateButtons(controller.beatmapLevel.levelID.Remove(0, 13).ToUpper());
         }
 
-        private void OnDifficultyChanged(StandardLevelDetailViewController controller, IDifficultyBeatmap beatmap)
+        private void OnDifficultyChanged(StandardLevelDetailViewController controller)
         {
-            UpdateButtons(beatmap.level.levelID.Remove(0, 13).ToUpper());
+            UpdateButtons(controller.beatmapLevel.levelID.Remove(0, 13).ToUpper());
         }
 
         private void UpdateButtons(string selectedSong)
@@ -226,7 +226,7 @@ namespace AwayPlayer.UI
         private string GetSelectedSongHash()
         {
             var standardLevel = Resources.FindObjectsOfTypeAll<StandardLevelDetailViewController>().First();
-            return standardLevel._previewBeatmapLevel.levelID.Remove(0, 13).ToUpper();
+            return standardLevel.beatmapLevel.levelID.Remove(0, 13).ToUpper();
         }
     }
 }

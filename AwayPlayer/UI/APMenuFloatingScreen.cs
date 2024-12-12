@@ -66,10 +66,10 @@ namespace AwayPlayer.UI
 
         public bool HandleVisible
         {
-            get => _floatingScreen.handle.gameObject.activeInHierarchy;
+            get => _floatingScreen.Handle.gameObject.activeInHierarchy;
             set
             {
-                _floatingScreen.handle.gameObject.SetActive(value);
+                _floatingScreen.Handle.gameObject.SetActive(value);
             }
         }
 
@@ -80,7 +80,7 @@ namespace AwayPlayer.UI
             _replayManager.FloatingScreen = this;
             _floatingScreen = FloatingScreen.CreateFloatingScreen(new Vector2(100f, 50f), true, new Vector3(0f, 2.8f, 2.5f), Quaternion.Euler(new Vector3(320f, 0f, 0f)));
             _floatingScreen.gameObject.SetActive(true);
-            _floatingScreen.handle.SetActive(false);
+            _floatingScreen.Handle.SetActive(false);
             Visible = false;
 
             didActivateEvent += (x, y, z) =>

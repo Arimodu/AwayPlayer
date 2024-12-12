@@ -204,10 +204,10 @@ namespace AwayPlayer
             }
 
             var beatmapPack = LevelsModel.GetLevelPackForLevelId(levelId);
-            var preview = LevelsModel.GetLevelPreviewForLevelId(levelId);
-            var beatmapDifficultySet = LevelsModel.GetBeatmapLevelIfLoaded(levelId).beatmapLevelData.GetDifficultyBeatmapSet(characteristicName);
-            var beatmapCharacteristic = beatmapDifficultySet.beatmapCharacteristic;
-            var beatmapDifficulty = beatmapDifficultySet.difficultyBeatmaps.Where((x) => x.difficulty == (BeatmapDifficulty)Enum.Parse(typeof(BeatmapDifficulty), difficultyName)).FirstOrDefault();
+            var beatmapLevel = LevelsModel.GetBeatmapLevel(levelId);
+            var beatmapCharacteristics = beatmapLevel.GetCharacteristics();
+            var beatmapDifficultySet = beatmapLevel.GetDifficulties(beatmapCharacteristics.First((x) => x.serializedName == characteristicName));
+            var beatmapDifficulty = beatmapDifficultySet.Where((x) => x == (BeatmapDifficulty)Enum.Parse(typeof(BeatmapDifficulty), difficultyName)).FirstOrDefault();
 
             try
             {
@@ -220,36 +220,38 @@ namespace AwayPlayer
                     Log.Error("Could not force select LevelCategory.All. Trying to show level preview anyway...");
                 }
 
-                selectionController.Setup(SongPackMask.all, BeatmapDifficultyMask.All, new BeatmapCharacteristicSO[0], false, false, "Play", beatmapPack, SelectLevelCategoryViewController.LevelCategory.All, preview, true);
-                var characteristicIndex = selectionController.
+                selectionController.Setup(SongPackMask.all, BeatmapDifficultyMask.All, new BeatmapCharacteristicSO[0], false, false, "Play", beatmapPack, SelectLevelCategoryViewController.LevelCategory.All, beatmapLevel, true);
+                var characteristicsSegmentedControl = selectionController.
                     _levelCollectionNavigationController.
                     _levelDetailViewController.
                     _standardLevelDetailView.
-                    _beatmapCharacteristicSegmentedControlController.
-                    _beatmapCharacteristics.IndexOf(beatmapCharacteristic);
+                    _beatmapCharacteristicSegmentedControlController;
 
-                var characteristicSegmentedControl = selectionController.
-                    _levelCollectionNavigationController.
-                    _levelDetailViewController.
-                    _standardLevelDetailView.
-                    _beatmapCharacteristicSegmentedControlController.
-                    _segmentedControl;
+                characteristicsSegmentedControl.SetData(characteristicsSegmentedControl._currentlyAvailableBeatmapCharacteristics, beatmapCharacteristics.First((x) => x.serializedName == characteristicName), new HashSet<BeatmapCharacteristicSO>());
+                //_beatmapCharacteristics.IndexOf(beatmapCharacteristic);
 
-                characteristicSegmentedControl.SelectCellWithNumber(characteristicIndex);
+                //var characteristicSegmentedControl = selectionController.
+                //    _levelCollectionNavigationController.
+                //    _levelDetailViewController.
+                //    _standardLevelDetailView.
+                //    _beatmapCharacteristicSegmentedControlController.
+                //    _segmentedControl;
 
-                selectionController.
-                    _levelCollectionNavigationController.
-                    _levelDetailViewController.
-                    _standardLevelDetailView.
-                    _beatmapCharacteristicSegmentedControlController.
-                    HandleDifficultySegmentedControlDidSelectCell(characteristicSegmentedControl, characteristicIndex);
+                //characteristicSegmentedControl.SelectCellWithNumber(characteristicIndex);
+
+                //selectionController.
+                //    _levelCollectionNavigationController.
+                //    _levelDetailViewController.
+                //    _standardLevelDetailView.
+                //    _beatmapCharacteristicSegmentedControlController.
+                //    HandleDifficultySegmentedControlDidSelectCell(characteristicSegmentedControl, characteristicIndex);
 
                 var difficultyIndex = selectionController.
                     _levelCollectionNavigationController.
                     _levelDetailViewController.
                     _standardLevelDetailView.
                     _beatmapDifficultySegmentedControlController.
-                    GetClosestDifficultyIndex(beatmapDifficulty.difficulty);
+                    GetClosestDifficultyIndex(beatmapDifficulty);
 
                 var difficultySegmentedControl = selectionController.
                     _levelCollectionNavigationController.

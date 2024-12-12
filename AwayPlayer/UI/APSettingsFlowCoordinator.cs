@@ -40,7 +40,7 @@ namespace AwayPlayer.UI
         public void Initialize()
         {
             APButton = new MenuButton("AwayPlayer", "Go get a coffee, Ill entertain your stream for you", OnMenuButtonPressed, ScoreListManager.IsReady);
-            MenuButtons.instance.RegisterButton(APButton);
+            MenuButtons.Instance.RegisterButton(APButton);
             ScoreListManager.OnScorelistUpdated += ScoreListManager_OnScorelistUpdated;
         }
 
