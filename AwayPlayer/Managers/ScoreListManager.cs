@@ -18,6 +18,7 @@ namespace AwayPlayer.Managers
         private readonly SiraLog Log;
         private readonly APConfig Config;
         private readonly WhitelistBlacklistManager WBMgr;
+        private readonly UnityMainThreadDispatcher Dispatcher;
         private Score[] _filteredScores = new Score[0];
 
         internal IPlaylist[] Playlists;
@@ -37,13 +38,14 @@ namespace AwayPlayer.Managers
 
         public event Action OnScorelistUpdated;
 
-        public ScoreListManager(PlayerDataModel playerDataModel, APIWrapper wrapper, SiraLog siraLog, APConfig config, WhitelistBlacklistManager whitelistBlacklistManager) 
+        public ScoreListManager(PlayerDataModel playerDataModel, APIWrapper wrapper, SiraLog siraLog, APConfig config, WhitelistBlacklistManager whitelistBlacklistManager, UnityMainThreadDispatcher dispatcher) 
         { 
             _playerData = playerDataModel.playerData;
             API = wrapper;
             Log = siraLog;
             Config = config;
             WBMgr = whitelistBlacklistManager;
+            Dispatcher = dispatcher;
 #if DEBUG
             Log.DebugMode = true;
 #endif
@@ -80,18 +82,26 @@ namespace AwayPlayer.Managers
 
             IsReady = false;
 
-            var filteredScores = FilterScores(AllScores.ToArray(), settings).ToList();
+            try
+            {
+                var filteredScores = FilterScores(AllScores.ToArray(), settings).ToList();
 
-            var blacklist = WBMgr.GetBlacklist();
-            var whitelist = WBMgr.GetWhitelist();
+                var blacklist = WBMgr.GetBlacklist();
+                var whitelist = WBMgr.GetWhitelist();
 
-            if (blacklist.Count > 0) filteredScores.RemoveAll(score => blacklist.Contains(score.Song.Hash.ToUpper()));
-            if (whitelist.Count > 0) filteredScores.AddRange(AllScores.Where(score => whitelist.Contains(score.Song.Hash.ToUpper())));
+                if (blacklist.Count > 0) filteredScores.RemoveAll(score => blacklist.Contains(score.Song.Hash.ToUpper()));
+                if (whitelist.Count > 0) filteredScores.AddRange(AllScores.Where(score => whitelist.Contains(score.Song.Hash.ToUpper())));
 
-            FilteredScores = filteredScores.ToArray();
+                FilteredScores = filteredScores.ToArray();
+            }
+            catch (Exception e)
+            {
+                Log.Error("Something happened while reloading the ScoreListManager... this is my fuck you solution (╯°□°）╯︵ ┻━┻");
+                Log.Error(e);
+            }
 
-            OnScorelistUpdated?.Invoke();
             IsReady = true;
+            Dispatcher.Enqueue(() => OnScorelistUpdated?.Invoke());
 
             Log.Notice($"Score list reload finished\nTotal scores: {AllScores.Count}\nTotal filtered: {FilteredScores.Length}");
         }

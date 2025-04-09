@@ -1,7 +1,8 @@
-﻿using AwayPlayer.Managers;
+﻿/*using AwayPlayer.Managers;
 using BeatSaberMarkupLanguage;
 using BeatSaberMarkupLanguage.MenuButtons;
 using HMUI;
+using SiraUtil.Logging;
 using Zenject;
 
 #pragma warning disable CS0649 // Value is never assigend to - We have zenject
@@ -10,13 +11,12 @@ namespace AwayPlayer.UI
     internal class APSettingsFlowCoordinator : FlowCoordinator, IInitializable
     {
         [Inject]
-        private readonly APSettingsMainViewController SettingsMainViewController;
-
-        [Inject]
         private readonly APMainMenu MainMenuFlowCoordinator;
 
         [Inject]
         private readonly ScoreListManager ScoreListManager;
+
+        [Inject] private readonly SiraLog Logger;
 
         private MenuButton APButton;
 
@@ -25,7 +25,7 @@ namespace AwayPlayer.UI
             if (firstActivation)
             {
                 SetTitle($"AwayPlayer v{Plugin.VersionString}");
-                ProvideInitialViewControllers(SettingsMainViewController, MainMenuFlowCoordinator);
+                ProvideInitialViewControllers(MainMenuFlowCoordinator);
             }
 
             showBackButton = true;
@@ -41,15 +41,13 @@ namespace AwayPlayer.UI
         {
             APButton = new MenuButton("AwayPlayer", "Go get a coffee, Ill entertain your stream for you", OnMenuButtonPressed, ScoreListManager.IsReady);
             MenuButtons.Instance.RegisterButton(APButton);
-            ScoreListManager.OnScorelistUpdated += ScoreListManager_OnScorelistUpdated;
+            ScoreListManager.OnScorelistUpdated += () => 
+            { 
+                APButton.Interactable = ScoreListManager.IsReady; 
+                MenuButtons.Instance.RegisterButton(APButton); 
+                Logger.Notice($"Updated menu button interactivity to {ScoreListManager.IsReady}"); 
+            };
         }
-
-        private void ScoreListManager_OnScorelistUpdated()
-        {
-            ScoreListManager.OnScorelistUpdated -= ScoreListManager_OnScorelistUpdated; // Only the first time is needed
-            APButton.Interactable = true;
-        }
-
         private void OnMenuButtonPressed()
         {
             if (MainMenuFlowCoordinator == null) return;
@@ -57,3 +55,4 @@ namespace AwayPlayer.UI
         }
     }
 }
+*/

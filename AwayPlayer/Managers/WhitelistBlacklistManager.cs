@@ -1,7 +1,7 @@
-﻿using SiraUtil.Logging;
+﻿using Community.CsharpSqlite.SQLiteClient;
+using SiraUtil.Logging;
 using System;
 using System.Collections.Generic;
-using System.Data.SQLite;
 using System.Threading;
 using System.Threading.Tasks;
 using Zenject;
@@ -36,80 +36,82 @@ namespace AwayPlayer.Managers
                 WhitelistTableName = $"Whitelist_{userId}";
 
                 // Create the table if it doesn't exist
-                using var command = new SQLiteCommand($"CREATE TABLE IF NOT EXISTS {BlacklistTableName} (Id INTEGER PRIMARY KEY AUTOINCREMENT, Key TEXT UNIQUE, Timestamp DATETIME)", DBMgr.Database);
-                ExecuteSQLiteCommand(command, "Creating blacklist table");
+                using (var command = new SqliteCommand($"CREATE TABLE IF NOT EXISTS {BlacklistTableName} (Id INTEGER PRIMARY KEY AUTOINCREMENT, Key TEXT UNIQUE, Timestamp DATETIME)", DBMgr.Database))
+                {
+                    ExecuteSQLiteCommand(command, "Creating blacklist table");
+                }
 
-                using var command2 = new SQLiteCommand($"CREATE TABLE IF NOT EXISTS {WhitelistTableName} (Id INTEGER PRIMARY KEY AUTOINCREMENT, Key TEXT UNIQUE, Timestamp DATETIME)", DBMgr.Database);
-                ExecuteSQLiteCommand(command2, "Creating whitelist table");
+                using (var command2 = new SqliteCommand($"CREATE TABLE IF NOT EXISTS {WhitelistTableName} (Id INTEGER PRIMARY KEY AUTOINCREMENT, Key TEXT UNIQUE, Timestamp DATETIME)", DBMgr.Database))
+                {
+                    ExecuteSQLiteCommand(command2, "Creating whitelist table");
+                }
             }).Wait();
             Log.Debug($"WhitelistBlacklistManager Ready");
         }
 
-        private void ExecuteSQLiteCommand(SQLiteCommand command, string actionDescription)
+        private void ExecuteSQLiteCommand(SqliteCommand command, string actionDescription)
         {
             try
             {
                 command.ExecuteNonQuery();
             }
-            catch (SQLiteException ex)
+            catch (SqliteException ex)
             {
                 if (ex.Message.Contains("UNIQUE constraint failed"))
                 {
-                    // Key already exists
                     Log.Warn($"{actionDescription} - Key already exists.");
                 }
                 else if (ex.Message.Contains("FOREIGN KEY constraint failed"))
                 {
-                    // Key does not exist
                     Log.Warn($"{actionDescription} - Key does not exist.");
                 }
                 else
                 {
-                    // Other SQLite errors
                     Log.Error($"{actionDescription} - SQLite error: {ex.Message}");
                 }
             }
             catch (Exception ex)
             {
-                // Other exceptions
                 Log.Error($"{actionDescription} - An error occurred: {ex.Message}");
             }
         }
 
         public void AddToWhitelist(string songHash)
         {
-            // Add key to the whitelist table
-            using var command = new SQLiteCommand($"INSERT INTO {WhitelistTableName} (Key, Timestamp) VALUES (@Key, @Timestamp)", DBMgr.Database);
-            command.Parameters.AddWithValue("@Key", songHash);
-            command.Parameters.AddWithValue("@Timestamp", DateTime.Now);
-            ExecuteSQLiteCommand(command, $"Adding {songHash} to whitelist");
+            using (var command = new SqliteCommand($"INSERT INTO {WhitelistTableName} (Key, Timestamp) VALUES (@Key, @Timestamp)", DBMgr.Database))
+            {
+                command.Parameters.Add(new SqliteParameter("@Key", songHash));
+                command.Parameters.Add(new SqliteParameter("@Timestamp", DateTime.Now));
 
-            if (Whitelist != null)
-                Whitelist.Add(songHash);
+                ExecuteSQLiteCommand(command, $"Adding {songHash} to whitelist");
+            }
+
+            Whitelist?.Add(songHash);
         }
 
         public void RemoveFromWhitelist(string songHash)
         {
-            // Remove key from the whitelist table
-            using var command = new SQLiteCommand($"DELETE FROM {WhitelistTableName} WHERE Key = @Key", DBMgr.Database);
-            command.Parameters.AddWithValue("@Key", songHash);
-            ExecuteSQLiteCommand(command, $"Removing {songHash} from whitelist");
+            using (var command = new SqliteCommand($"DELETE FROM {WhitelistTableName} WHERE Key = @Key", DBMgr.Database))
+            {
+                command.Parameters.Add(new SqliteParameter("@Key", songHash));
+                ExecuteSQLiteCommand(command, $"Removing {songHash} from whitelist");
+            }
 
-            if (Whitelist != null)
-                Whitelist.Remove(songHash);
+            Whitelist?.Remove(songHash);
         }
 
         public List<string> GetWhitelist()
         {
-            if (Whitelist != null) 
+            if (Whitelist != null)
                 return Whitelist;
 
             var items = new List<string>();
-            using (var command = new SQLiteCommand($"SELECT * FROM {WhitelistTableName}", DBMgr.Database))
+            using (var command = new SqliteCommand($"SELECT * FROM {WhitelistTableName}", DBMgr.Database))
             {
                 using var reader = command.ExecuteReader();
                 while (reader.Read())
                 {
+                    // Column name: "Key"
                     items.Add(reader["Key"].ToString());
                 }
             }
@@ -120,25 +122,26 @@ namespace AwayPlayer.Managers
 
         public void AddToBlacklist(string songHash)
         {
-            // Add key to the blacklist table
-            using var command = new SQLiteCommand($"INSERT INTO {BlacklistTableName} (Key, Timestamp) VALUES (@Key, @Timestamp)", DBMgr.Database);
-            command.Parameters.AddWithValue("@Key", songHash);
-            command.Parameters.AddWithValue("@Timestamp", DateTime.Now);
-            ExecuteSQLiteCommand(command, $"Adding {songHash} to blacklist");
+            using (var command = new SqliteCommand($"INSERT INTO {BlacklistTableName} (Key, Timestamp) VALUES (@Key, @Timestamp)", DBMgr.Database))
+            {
+                command.Parameters.Add(new SqliteParameter("@Key", songHash));
+                command.Parameters.Add(new SqliteParameter("@Timestamp", DateTime.Now));
 
-            if (Blacklist != null) 
-                Blacklist.Add(songHash);
+                ExecuteSQLiteCommand(command, $"Adding {songHash} to blacklist");
+            }
+
+            Blacklist?.Add(songHash);
         }
 
         public void RemoveFromBlacklist(string songHash)
         {
-            // Remove key from the blacklist table
-            using var command = new SQLiteCommand($"DELETE FROM {BlacklistTableName} WHERE Key = @Key", DBMgr.Database);
-            command.Parameters.AddWithValue("@Key", songHash);
-            ExecuteSQLiteCommand(command, $"Removing {songHash} from blacklist");
+            using (var command = new SqliteCommand($"DELETE FROM {BlacklistTableName} WHERE Key = @Key", DBMgr.Database))
+            {
+                command.Parameters.Add(new SqliteParameter("@Key", songHash));
+                ExecuteSQLiteCommand(command, $"Removing {songHash} from blacklist");
+            }
 
-            if (Blacklist != null)
-                Blacklist.Remove(songHash);
+            Blacklist?.Remove(songHash);
         }
 
         public List<string> GetBlacklist()
@@ -147,11 +150,12 @@ namespace AwayPlayer.Managers
                 return Blacklist;
 
             var items = new List<string>();
-            using (var command = new SQLiteCommand($"SELECT * FROM {BlacklistTableName}", DBMgr.Database))
+            using (var command = new SqliteCommand($"SELECT * FROM {BlacklistTableName}", DBMgr.Database))
             {
                 using var reader = command.ExecuteReader();
                 while (reader.Read())
                 {
+                    // Column name: "Key"
                     items.Add(reader["Key"].ToString());
                 }
             }

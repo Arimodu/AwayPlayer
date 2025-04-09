@@ -43,11 +43,11 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="BepInEx.AssemblyPublicizer.MSBuild" Version="0.4.1" PrivateAssets="all" />
+    <PackageReference Include="Community.CsharpSqlite.SQLiteClient">
+      <Version>3.7.7.3</Version>
+    </PackageReference>
     <PackageReference Include="ILRepack.Lib.MSBuild.Task">
       <Version>2.0.18.2</Version>
-    </PackageReference>
-    <PackageReference Include="System.Data.SQLite">
-      <Version>1.0.118</Version>
     </PackageReference>
     <Reference Include="BeatLeader" Publicize="true">
       <HintPath>$(BeatSaberDir)\Plugins\BeatLeader.dll</HintPath>

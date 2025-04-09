@@ -17,9 +17,9 @@ namespace AwayPlayer.Installers
             Container.BindInterfacesAndSelfTo<ScoreListManager>().AsSingle();
             Container.BindInterfacesAndSelfTo<ReplayManager>().AsSingle();
             Container.BindInterfacesAndSelfTo<APMenuFloatingScreen>().FromNewComponentAsViewController().AsSingle();
-            Container.BindInterfacesAndSelfTo<APMainMenu>().FromNewComponentAsViewController().AsSingle();
-            Container.BindInterfacesAndSelfTo<APSettingsMainViewController>().FromNewComponentAsViewController().AsSingle();
-            Container.BindInterfacesAndSelfTo<APSettingsFlowCoordinator>().FromNewComponentOnNewGameObject().AsSingle();
+            //Container.BindInterfacesAndSelfTo<APMainMenu>().FromNewComponentAsViewController().AsSingle();
+            //Container.BindInterfacesAndSelfTo<APSettingsMainViewController>().FromNewComponentAsViewController().AsSingle();
+            //Container.BindInterfacesAndSelfTo<APSettingsFlowCoordinator>().FromNewComponentOnNewGameObject().AsSingle();
             Container.BindInterfacesAndSelfTo<MenuButtonManager>().FromNewComponentAsViewController().AsSingle();
             Container.BindInterfacesAndSelfTo<ArgParser>().AsSingle();
         }

@@ -195,25 +195,26 @@ namespace AwayPlayer
 
         public void ShowLevelPreview(string levelId, string characteristicName, string difficultyName)
         {
-            var selectionController = GameObject.Find("LevelSelectionNavigationController").GetComponent<LevelSelectionNavigationController>();
-
-            if (selectionController == null)
-            {
-                Log.Error("Could not find LevelSelectionNavigationController! Cannot show preview!");
-                return;
-            }
-
-            var beatmapPack = LevelsModel.GetLevelPackForLevelId(levelId);
-            var beatmapLevel = LevelsModel.GetBeatmapLevel(levelId);
-            var beatmapCharacteristics = beatmapLevel.GetCharacteristics();
-            var beatmapDifficultySet = beatmapLevel.GetDifficulties(beatmapCharacteristics.First((x) => x.serializedName == characteristicName));
-            var beatmapDifficulty = beatmapDifficultySet.Where((x) => x == (BeatmapDifficulty)Enum.Parse(typeof(BeatmapDifficulty), difficultyName)).FirstOrDefault();
-
             try
             {
+                var selectionController = GameObject.Find("LevelSelectionNavigationController").GetComponent<LevelSelectionNavigationController>();
+
+                if (selectionController == null)
+                {
+                    Log.Error("Could not find LevelSelectionNavigationController! Cannot show preview!");
+                    return;
+                }
+
+                var beatmapPack = LevelsModel.GetLevelPackForLevelId(levelId);
+                var beatmapLevel = LevelsModel.GetBeatmapLevel(levelId);
+                var beatmapCharacteristics = beatmapLevel.GetCharacteristics();
+                var beatmapDifficultySet = beatmapLevel.GetDifficulties(beatmapCharacteristics.First((x) => x.serializedName == characteristicName));
+                var beatmapDifficulty = beatmapDifficultySet.Where((x) => x == (BeatmapDifficulty)Enum.Parse(typeof(BeatmapDifficulty), difficultyName)).FirstOrDefault();
+
+            
                 try
                 {
-                    ForceSelectFilterCategory(SelectLevelCategoryViewController.LevelCategory.All);
+                    //ForceSelectFilterCategory(SelectLevelCategoryViewController.LevelCategory.All);
                 }
                 catch (System.NullReferenceException)
                 {
@@ -227,7 +228,7 @@ namespace AwayPlayer
                     _standardLevelDetailView.
                     _beatmapCharacteristicSegmentedControlController;
 
-                characteristicsSegmentedControl.SetData(characteristicsSegmentedControl._currentlyAvailableBeatmapCharacteristics, beatmapCharacteristics.First((x) => x.serializedName == characteristicName), new HashSet<BeatmapCharacteristicSO>());
+                //characteristicsSegmentedControl.SetData(characteristicsSegmentedControl._currentlyAvailableBeatmapCharacteristics, beatmapCharacteristics.First((x) => x.serializedName == characteristicName), new HashSet<BeatmapCharacteristicSO>());
                 //_beatmapCharacteristics.IndexOf(beatmapCharacteristic);
 
                 //var characteristicSegmentedControl = selectionController.

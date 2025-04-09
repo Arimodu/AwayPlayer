@@ -17,7 +17,7 @@ namespace AwayPlayer
         internal static IPALogger Logger { get; set; }
         internal static Harmony Harmony { get; private set; }
         internal static Assembly Assembly { get; } = Assembly.GetExecutingAssembly();
-        internal static Version Version { get; } = new Version(0, 1, 2);
+        internal static Version Version { get; } = new Version(0, 1, 4);
 
         public static string VersionString => Version.ToString();
 
@@ -36,15 +36,14 @@ namespace AwayPlayer
         [OnStart]
         public void OnStart()
         {
-            Harmony = new Harmony("Arimodu.AwayPlayer");
+            //Harmony = new Harmony("Arimodu.AwayPlayer");
             //Harmony.PatchAll(Assembly); // Will patch on first focus / defocus cycle
         }
 
-        [OnExit]
-        public void OnExit() => Harmony.UnpatchAll();
+        //[OnExit]
+        //public void OnExit() => Harmony.
 
         /* TODO:
-         * - Caching???
          * - Handle
          * - Floating button
          * - Player settings editor

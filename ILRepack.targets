@@ -3,12 +3,9 @@
     <Target Name="ILRepacker" AfterTargets="Build">
         <ItemGroup>
 		    <InputAssemblies Include="$(OutputPath)$(AssemblyName).dll" />
-			<InputAssemblies Include="$(OutputPath)System.Data.SQLite.dll" />
-			<InputAssemblies Include="$(OutputPath)System.Data.SQLite.EF6.dll" />
-			<InputAssemblies Include="$(OutputPath)System.Data.SQLite.Linq.dll" />
-			<!--<InputAssemblies Include="$(OutputPath)x64\SQLite.Interop.dll" /> native dlls are not supported by ILRepack-->
-			<InputAssemblies Include="$(OutputPath)System.Memory.dll" />
-        </ItemGroup>
+			<InputAssemblies Include="$(OutputPath)Community.CsharpSqlite.dll" />
+			<InputAssemblies Include="$(OutputPath)Community.CsharpSqlite.SQLiteClient.dll" />
+		</ItemGroup>
 		<ItemGroup>
 			<LibraryPath Include="$(BeatSaberDir)\Beat Saber_Data\Managed\" />
 			<LibraryPath Include="$(BeatSaberDir)\Beat Saber_Data\Libs\" />
